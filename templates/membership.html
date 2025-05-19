@@ -1,0 +1,88 @@
+{% extends "base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/membership.css') }}"
+/>
+{% endblock %} {% block title %}Lid worden{% endblock %} {% block content %}
+
+<!-- Section 1 -->
+<section class="section1">
+  <p class="title">Lid worden?</h1>
+  <p class="subtitle2">
+    Doe mee aan onze activiteiten en geniet van onze voordelen.
+  </p>
+  <button
+    class="normal-button"
+    onclick="document.querySelector('.section2').scrollIntoView({ behavior: 'smooth' });"
+  >
+    Word lid
+  </button>
+</section>
+
+<!-- Section 2 -->
+<section class="section2">
+  <h1>Lid worden</h1>
+  <div class="form">
+    <form action="/membership-form-submit" method="POST">
+      <label class="label1" for="fname">Voornaam <span class="required-field">*</span></label>
+      <input type="text" id="fname" name="firstname" required />
+
+      <label class="label1" for="lname">Achternaam <span class="required-field">*</span></label>
+      <input type="text" id="lname" name="lastname" required />
+
+      <label class="label1" for="email">E-mail <span class="required-field">*</span></label>
+      <input type="email" id="email" name="email" required />
+
+      <label class="label1" for="phone">Telefoonnummer</label>
+      <input type="text" id="phone" name="phone" />
+
+      <label class="label1" for="gsm">GSM-nummer <span class="required-field">*</span></label>
+      <input type="text" id="gsm" name="gsm" required />      
+
+      <label class="label1" for="adress">Adres <span class="required-field">*</span></label>
+      <label class="label2" for="street">Straat + Huisnummer</label>
+      <input type="text" id="street" name="street" required/>
+
+      <div class="container-adress">
+        <div class="container-element">
+          <label class="label2" for="city">Stad/Gemeente</label>
+          <input type="text" id="city" name="city" required />
+        </div>
+        <div class="container-element">
+          <label class="label2" for="zip">Postcode</label>
+          <input type="text" id="zip" name="zip" required/>
+        </div>
+      </div>
+
+      <label class="label1" for="membership_type">Type lidmaatschap <span class="required-field">*</span></label>
+      <div class="membership-type-options">
+        <label class="label2">
+          <input type="radio" name="membership_type" value="Enkel lid" required>
+          Alleen voor mezelf
+        </label>
+        <label class="label2">
+          <input type="radio" name="membership_type" value="Familiekaart">
+          Familiekaart (zelfde familienaam lid of partner)
+        </label>
+        <label class="label2">
+          <input type="radio" name="membership_type" value="Individuele lidkaarten voor gezinsleden">
+          Individuele lidkaarten alle gezinsleden
+        </label>
+      </div>
+
+      <button class="normal-button">Verzenden</button>
+    </form>
+      <p class="form-text">
+      We hechten veel belang aan de bescherming van je persoonsgegevens. Je
+      gegevens worden vertrouwelijk verwerkt conform de geldende
+      privacywetgeving. Meer info in onze
+      <a
+        href="https://raakvzw.be/privacy-policy/"
+        target="_blank"
+        rel="noopener"
+        >privacy policy</a>.
+      </p>
+  </div>
+</section>
+
+{% endblock%}

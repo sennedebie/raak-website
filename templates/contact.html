@@ -1,0 +1,60 @@
+{% extends "base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/contact.css') }}"
+/>
+{% endblock %} {% block title %}Contact{% endblock %} {% block content %}
+
+<!-- Section 1 -->
+<section class="section1">
+  <p class="title">Vragen?</p>
+  <p class="subtitle1">Opmerkingen?</p>
+  <p class="subtitle2">Laat het ons weten.</p>
+
+  <button
+    class="normal-button"
+    onclick="document.querySelector('.section2').scrollIntoView({ behavior: 'smooth' });"
+  >
+    Contacteer ons
+  </button>
+</section>
+
+<!-- Section 2 -->
+<section class="section2">
+  <h1>Contactformulier</h1>
+  <div class="form">
+    <form action="/contact-form-submit" method="POST">
+      <label class="label1" for="fname"
+        >Voornaam <span class="required-field">*</span></label
+      >
+      <input type="text" id="fname" name="firstname" required />
+      <label class="label1" for="lname"
+        >Achternaam <span class="required-field">*</span></label
+      >
+      <input type="text" id="lname" name="lastname" required />
+      <label class="label1" for="email"
+        >E-mail <span class="required-field">*</span></label
+      >
+      <input type="email" id="email" name="email" required />
+      <label class="label1" for="message"
+        >Bericht <span class="required-field">*</span></label
+      >
+      <textarea id="message" name="message" required></textarea>
+      <button type="submit" class="normal-button">Verzenden</button>
+    </form>
+    <p class="form-text">
+      We hechten veel belang aan de bescherming van je persoonsgegevens. Je
+      gegevens worden vertrouwelijk verwerkt conform de geldende
+      privacywetgeving. Meer info in onze
+      <a
+        href="https://raakvzw.be/privacy-policy/"
+        target="_blank"
+        rel="noopener"
+        >privacy policy</a
+      >.
+    </p>
+    <p class="form-text">* Dit is een vereist veld.</p>
+  </div>
+</section>
+
+{% endblock%}

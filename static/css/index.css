@@ -1,0 +1,93 @@
+/* Section styling */
+.section1 { background-color: #3aba9b; }
+.section2 { background-color: #ffce00; }
+.section3 { background-color: #f17fb2; }
+.section4 { background-color: #ee3a37; }
+
+
+.carousel-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 2rem 1rem;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.carousel-wrapper {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  flex-shrink: 0;
+  display: none;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.carousel-slide.active {
+  display: block;
+}
+
+.carousel-controls {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.carousel-controls button {
+  font-size: 1.5rem;
+  padding: 0.3rem 1rem;
+  margin: 0 0.5rem;
+  cursor: pointer;
+  background: #ddd;
+  border: none;
+  border-radius: 4px;
+}
+
+.read-more {
+  display: inline-block;
+  margin-top: 1rem;
+  text-decoration: none;
+  color: #0066cc;
+}
+
+.carousel-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.flexbox {
+    display: flex;
+    flex-direction: row; /* Items are placed in a row */
+    flex-wrap: wrap; /* Allow items to wrap to the next line */
+    justify-content: space-evenly; /* Center items horizontally */;
+    gap: 50px;
+}
+
+.flexbox-item {
+    flex-basis: calc(33.33% - 5px); /* Default width: 1/3 of the container minus gap */
+    max-width: 300px; /* Limit the maximum width of each item */
+    text-align: justify;
+    margin: 20px; /* Add margin around items */
+}
+
+/* Media query for smaller screens */
+@media (max-width: 768px) {
+    .flexbox-item {
+        flex-basis: calc(50% - 40px); /* Adjust to 2 items per row */
+    }
+}
+
+@media (max-width: 480px) {
+    .flexbox-item {
+        flex-basis: 100%; /* Stack items vertically */
+    }
+}

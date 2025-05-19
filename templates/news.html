@@ -1,0 +1,28 @@
+{% extends "base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/news.css') }}"
+/>
+{% endblock %} {% block title %}Nieuws{% endblock %} {% block content %}
+<div class="news-page">
+  <h1>Nieuws</h1>
+
+  {% if posts %} {% for post in posts %}
+  <article class="news-post">
+    {# Image if it exists #} {% if post.image_filename %}
+    <img
+      src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}"
+      alt="Afbeelding voor {{ post.title }}"
+      class="news-image"
+    />
+    {% endif %}
+
+    <h2>{{ post.title }}</h2>
+    <p class="meta">{{ post.category }} – {{ post.date }}</p>
+    <p>{{ post.content }}</p>
+  </article>
+  {% endfor %} {% else %}
+  <p>Er zijn momenteel geen nieuwsberichten.</p>
+  {% endif %}
+</div>
+{% endblock%}

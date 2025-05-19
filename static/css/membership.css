@@ -1,0 +1,91 @@
+.section1 { background-color: #f17fb2; }
+.section2 { background-color: #0051a4; }
+.section3 { background-color: #f17fb2; }
+.section4 { background-color: #ee3a37; }
+
+li .nav-button-membership {
+    text-decoration: underline;
+    text-decoration-thickness: 4px;
+    text-underline-offset: 6px;
+}
+
+li .nav-button-membership:hover {
+    color: #0051a4;
+}
+
+
+/* Contact form */
+.label1 {
+    display: block;
+    text-align: left;
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color:grey;
+    margin-bottom: 5px;
+}
+
+.label2 {
+    display: block;
+    text-align: left;
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
+    color:grey;
+    margin-bottom: 10px;
+    margin-top: 15px
+}
+
+.container-adress {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-content: stretch;
+}
+
+.container-element {
+    flex-shrink: 1;
+    flex-grow: 1; /* Allow elements to grow and take equal space */
+    flex-basis: 0; /* Ensure elements start with equal width */
+}
+
+input[type=text], input[type=email], select, textarea {
+    display: block;
+    width: 100%;
+    padding: clamp(10px, 2vw, 12px);
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    box-sizing: border-box;
+    margin-top: clamp(5px, 1vw, 6px);
+    margin-bottom: clamp(20px, 3vw, 40px);
+
+    resize: vertical;
+    font-size: clamp(1rem, 2vw, 1rem);
+    color:#0051a4;
+    font-weight: 500;
+}
+
+input:focus, textarea:focus {
+    border-color: #0051a4;
+    outline: none; /* Removes default styling by browser */
+}
+
+
+textarea {
+    min-height: 200px;
+}
+
+.required-field {
+    color: #ee3a37;
+}
+
+/* Add a background color and some padding around the form */
+.form {
+    border-radius: 50px;
+    padding-left:50px;
+    padding-right:50px;
+    padding-top:50px;
+    padding-bottom:50px;
+    width: clamp(90%, 800px, 100%);
+    background: white;
+    margin-top: clamp(10px, 2vw, 15px);
+    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+

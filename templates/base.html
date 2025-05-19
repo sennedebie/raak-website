@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <!-- Metadata -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Officiële website van Raak Leerbeek-Kester"
+    />
+    <meta name="keywords" content="raak, kwb, leerbeek, kester" />
+    <meta name="author" content="Senne De Bie" />
+
+    <!-- Title (default if not overriden) -->
+    <title>{% block title %}Raak Leerbeek-Kester{% endblock %}</title>
+
+    <!-- Global/main stylesheet -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+
+    <!-- Page-specific styles -->
+    {% block extra_css %}{% endblock %}
+
+    <!-- Google Font Radio Canada and Orbitron -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Radio+Canada:ital,wght@0,300..700;1,300..700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!--
+      This section handles the display of flash messages in the template.
+      It retrieves flashed messages (with their categories) using Flask's `get_flashed_messages` function.
+      If there are any messages, it iterates over them and displays each message inside a div,
+      applying a CSS class based on the message category for styling purposes.
+    -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="flashes">
+      {% for category, message in messages %}
+      <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+
+    <!-- Logo and navbar-->
+    <header>
+      <nav class="nav-bar">
+        <div class="logo">
+          <a href="{{ url_for('index') }}">
+            <img
+              src="{{ url_for('static', filename='images/logo-blue.png') }}"
+              alt="Raak logo"
+            />
+          </a>
+        </div>
+        <ul class="nav-buttons">
+          <li>
+            <a class="nav-button-news" href="{{ url_for('news') }}">Nieuws</a>
+          </li>
+          <li>
+            <a class="nav-button-agenda" href="{{ url_for('agenda') }}"
+              >Agenda</a
+            >
+          </li>
+          <li>
+            <a class="nav-button-membership" href="{{ url_for('membership') }}"
+              >Lid worden</a
+            >
+          </li>
+          <li>
+            <a class="nav-button-contact" href="{{ url_for('contact') }}"
+              >Contact</a
+            >
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      {% block content %} Welkom op de website van Raak Leerbeek-Kester {%
+      endblock %}
+    </main>
+
+    <footer>
+      <p>&#169; 2025 Raak Leerbeek-Kester</p>
+      <p>
+        Creatie door
+        <a href="https://www.linkedin.com/in/sennedebie/" target="_blank"
+          ><span>Senne De Bie</span></a
+        >
+      </p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/carousel.js') }}"></script>
+  </body>
+</html>

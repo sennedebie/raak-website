@@ -1,0 +1,51 @@
+.admin-container {
+  max-width: 900px;
+  margin: auto;
+  padding: 2rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.admin-table th, .admin-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.admin-form {
+  max-width: 600px;
+  margin: auto;
+  padding: 1rem;
+}
+
+.admin-form form {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-form label {
+  margin-top: 1rem;
+}
+
+.admin-form input, .admin-form textarea {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.admin-form button {
+  margin-top: 1.5rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+  background: #0066cc;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.admin-form button:hover {
+  background: #004999;
+}
