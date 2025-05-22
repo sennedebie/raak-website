@@ -1,0 +1,30 @@
+{% extends "base.html" %} {% block extra_css %}
+<!-- There is only one css styling file for all admin pages -->
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/register.css') }}"
+/>
+{% endblock %} {% block title %}Registratie{% endblock %} {% block content %}
+
+<form method="POST">
+  <input name="username" placeholder="Username" required /><br />
+  <input
+    name="password"
+    type="password"
+    placeholder="Password"
+    required
+  /><br />
+
+  <label for="role">Role:</label>
+  <select name="role">
+    <option value="user" selected>user</option>
+    <option value="admin">admin</option>
+    <option value="author">author</option>
+  </select>
+  <br />
+
+  <button type="submit">Register</button>
+</form>
+
+{% endblock%}

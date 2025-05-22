@@ -1,0 +1,33 @@
+.news-post-form {
+  max-width: 600px;
+  margin: auto;
+  padding: 1rem;
+}
+
+.news-post-form form {
+  display: flex;
+  flex-direction: column;
+}
+
+.news-post-form label {
+  margin-top: 1rem;
+}
+
+.news-post-form input, .news-post-form textarea {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.news-post-form button {
+  margin-top: 1.5rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+  background: #0066cc;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.news-post-form button:hover {
+  background: #004999;
+}

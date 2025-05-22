@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="nl">
   <head>
-    <!-- Metadata -->
+    <!-- ==================== -->
+    <!-- 1. METADATA & TITLE  -->
+    <!-- ==================== -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -11,19 +13,19 @@
     <meta name="keywords" content="raak, kwb, leerbeek, kester" />
     <meta name="author" content="Senne De Bie" />
 
-    <!-- Title (default if not overriden) -->
     <title>{% block title %}Raak Leerbeek-Kester{% endblock %}</title>
 
+    <!-- ==================== -->
+    <!-- 2. STYLESHEETS       -->
+    <!-- ==================== -->
     <!-- Global/main stylesheet -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
-
     <!-- Page-specific styles -->
     {% block extra_css %}{% endblock %}
-
-    <!-- Google Font Radio Canada and Orbitron -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -32,6 +34,9 @@
     />
   </head>
   <body>
+    <!-- ==================== -->
+    <!-- 3. FLASH MESSAGES    -->
+    <!-- ==================== -->
     <!--
       This section handles the display of flash messages in the template.
       It retrieves flashed messages (with their categories) using Flask's `get_flashed_messages` function.
@@ -47,7 +52,9 @@
     </div>
     {% endif %} {% endwith %}
 
-    <!-- Logo and navbar-->
+    <!-- ==================== -->
+    <!-- 4. HEADER & NAVBAR   -->
+    <!-- ==================== -->
     <header>
       <nav class="nav-bar">
         <div class="logo">
@@ -58,6 +65,12 @@
             />
           </a>
         </div>
+        <button
+          class="menu-toggle"
+          onclick="document.querySelector('.nav-buttons').classList.toggle('show')"
+        >
+          &#9776;
+        </button>
         <ul class="nav-buttons">
           <li>
             <a class="nav-button-news" href="{{ url_for('news') }}">Nieuws</a>
@@ -81,11 +94,17 @@
       </nav>
     </header>
 
+    <!-- ==================== -->
+    <!-- 5. MAIN CONTENT      -->
+    <!-- ==================== -->
     <main>
       {% block content %} Welkom op de website van Raak Leerbeek-Kester {%
       endblock %}
     </main>
 
+    <!-- ==================== -->
+    <!-- 6. FOOTER            -->
+    <!-- ==================== -->
     <footer>
       <p>&#169; 2025 Raak Leerbeek-Kester</p>
       <p>
@@ -96,6 +115,9 @@
       </p>
     </footer>
 
+    <!-- ==================== -->
+    <!-- 7. SCRIPTS           -->
+    <!-- ==================== -->
     <script src="{{ url_for('static', filename='js/carousel.js') }}"></script>
   </body>
 </html>

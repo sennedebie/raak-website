@@ -3,69 +3,101 @@
   rel="stylesheet"
   href="{{ url_for('static', filename='css/index.css') }}"
 />
-{% endblock %} {% block title %}Raak Leerbeek-Kester{% endblock %} {% block content %}
+{% endblock %} {% block title %}Raak Leerbeek-Kester{% endblock %} {% block
+content %}
 
-<!-- Section 1 -->
+<!-- Section 1: Hero/Intro -->
 <section class="section1">
-  <p class="title">Beleef meer!</h1>
-  <p class="subtitle1">in Leerbeek-Kester</h2>
+  <p class="title">Beleef meer!</p>
+  <h2 class="subtitle1">in Leerbeek-Kester</h2>
   <p class="subtitle2">
     Welkom bij Raak, waar buurten bruisen en ontmoeting centraal staat.
   </p>
   <a href="https://raakvzw.be" target="_blank" rel="noopener">
     <button class="normal-button">Ontdek meer</button>
   </a>
-  
 </section>
 
-<!-- Section 2 -->
+<!-- Section 2: News overview (shows latest news posts in a responsive flexbox) -->
 <section class="section2">
   <h1>Nieuws</h1>
-<div class="carousel-container">
-  <div class="carousel-wrapper">
+  <!--
+    This flexbox displays the latest news posts.
+    Each post shows an image (if available), title, category/date, a truncated preview of the content,
+    and a "Lees verder" link to the full news page.
+    The preview is limited to 200 characters and ends with "..." if the content is longer.
+  -->
+  <div class="news-flexbox">
     {% for post in posts %}
-    <div class="carousel-slide{% if loop.index0 == 0 %} active{% endif %}">
-
-      {# Show image if one exists #}
+    <div class="news-item">
       {% if post.image_filename %}
-        <img src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}"
-             alt="Afbeelding voor {{ post.title }}"
-             class="carousel-image">
+      <img
+        src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}"
+        alt="Afbeelding voor {{ post.title }}"
+        class="news-image"
+      />
       {% endif %}
-
-      <h2>{{ post.title }}</h2>
-      <p class="news-meta">{{ post.category }} | {{ post.date }}</p>
-      <p>{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+      <h2 class="post-title">{{ post.title }}</h2>
+      <p>
+        <span class="post-date">{{ post.date }}</span>
+        <!--
+        The post-category span below uses a dynamic class based on the post's category.
+        Spaces in the category are replaced with hyphens and all letters are lowercase,
+        so you can target specific categories in your CSS (e.g. .post-category-sport).
+      -->
+        <span
+          class="post-category post-category-{{ post.category|lower|replace(' ', '-') }}"
+          >{{ post.category }}</span
+        >
+      </p>
+      <p class="post-content">
+        {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
+      </p>
       <a href="{{ url_for('news') }}" class="read-more">Lees verder →</a>
     </div>
     {% endfor %}
   </div>
-</div>
-
-  <div class="carousel-controls">
-    <button id="prev">&#8592;</button>
-    <button id="next">&#8594;</button>
-  </div>
-</div>
 </section>
 
-<!-- Section 3 -->
+<!-- Section 3: About us (organization info in flexbox columns) -->
 <section class="section3">
   <h1>Over ons</h1>
-<div class="flexbox">
-  <div class="flexbox-item">
-    <p class="column-title1">Wie zijn we?</p>
-    <p class="main-text">Met duizenden vrijwilligers in meer dan 450 Vlaamse en Brusselse buurten doet Raak elke dag opnieuw buurten bruisen. Met fijne activiteiten brengen we buurtbewoners samen. Samen met hen werken we aan een buurt met meer verbinding en gezelligheid, en steken we de handen uit de mouwen om die buurt leuker en beter te maken. Mensen zijn de motor van hun buurt, Raak de vonk die hen in gang zet.</p>
+  <div class="flexbox">
+    <div class="flexbox-item">
+      <p class="column-title1">Wie zijn we?</p>
+      <p class="main-text">
+        Met duizenden vrijwilligers in meer dan 450 Vlaamse en Brusselse buurten
+        doet Raak elke dag opnieuw buurten bruisen. Met fijne activiteiten
+        brengen we buurtbewoners samen. Samen met hen werken we aan een buurt
+        met meer verbinding en gezelligheid, en steken we de handen uit de
+        mouwen om die buurt leuker en beter te maken. Mensen zijn de motor van
+        hun buurt, Raak de vonk die hen in gang zet.
+      </p>
+    </div>
+    <div class="flexbox-item">
+      <p class="column-title1">Wat doen we?</p>
+      <p class="main-text">
+        Meer leven in jouw buurt? Da’s helemaal Raak! Van sport tot
+        gezinsactiviteiten, en van kookworkshops tot boeiende lezingen: we
+        hebben het voor jou. Verbinding staat bij ons centraal: bij ons ontmoet
+        je je buren, en word ook jij deel van de buurt. Samen met jou zorgen we
+        voor een fijne en levendige plek. Een plek waar mensen dichter bij
+        elkaar komen, waar iedereen zich thuis voelt en waar van alles te
+        beleven valt, ook voor jou.
+      </p>
+    </div>
+    <div class="flexbox-item">
+      <p class="column-title1">Raak voor iedereen</p>
+      <p class="main-text">
+        Welke leeftijd, achtergrond, kleur of overtuiging je ook hebt: bij ons
+        ben je welkom. Je ontmoet er anderen, die soms meer ‘anders’ dan
+        gelijkend zijn … of waar je net verrassend veel mee gemeen hebt. Bij ons
+        leer je anderen kennen én waarderen, over grenzen en verschillen heen.
+        Raak heet iedereen welkom, en helpt hun plaats te vinden. Zo zorgen we
+        dat iedereen zich goed voelt in onze vereniging en in de buurt.
+      </p>
+    </div>
   </div>
-  <div class="flexbox-item">
-    <p class="column-title1">Wat doen we?</p>
-    <p class="main-text">Meer leven in jouw buurt? Da’s helemaal Raak! Van sport tot gezinsactiviteiten, en van kookworkshops tot boeiende lezingen: we hebben het voor jou. Verbinding staat bij ons centraal: bij ons ontmoet je je buren, en word ook jij deel van de buurt. Samen met jou zorgen we voor een fijne en levendige plek. Een plek waar mensen dichter bij elkaar komen, waar iedereen zich thuis voelt en waar van alles te beleven valt, ook voor jou.</p>
-  </div>
-  <div class="flexbox-item">
-    <p class="column-title1">Raak voor iedereen</p>
-    <p class="main-text">Welke leeftijd, achtergrond, kleur of overtuiging je ook hebt: bij ons ben je welkom. Je ontmoet er anderen, die soms meer ‘anders’ dan gelijkend zijn … of waar je net verrassend veel mee gemeen hebt. Bij ons leer je anderen kennen én waarderen, over grenzen en verschillen heen. Raak heet iedereen welkom, en helpt hun plaats te vinden. Zo zorgen we dat iedereen zich goed voelt in onze vereniging en in de buurt.</p>
-  </div>
-</div>
 </section>
 
 {% endblock%}

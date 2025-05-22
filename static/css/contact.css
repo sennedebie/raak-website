@@ -1,8 +1,14 @@
+/* -------------------- */
+/* 1. SECTION COLORS    */
+/* -------------------- */
 .section1 { background-color: #0051a4; }
 .section2 { background-color: #ffce00; }
 .section3 { background-color: #f17fb2; }
 .section4 { background-color: #ee3a37; }
 
+/* -------------------- */
+/* 2. NAVIGATION ACTIVE */
+/* -------------------- */
 li .nav-button-contact {
     text-decoration: underline;
     text-decoration-thickness: 4px;
@@ -13,7 +19,9 @@ li .nav-button-contact:hover {
     color: #0051a4;
 }
 
-
+/* -------------------- */
+/* 3. BUTTONS           */
+/* -------------------- */
 .normal-button {
     background-color: #ee3a37; 
 }
@@ -23,16 +31,17 @@ li .nav-button-contact:hover {
 }
 
 .normal-button:active {
-    background-color:#ffce00;
+    background-color: #ffce00;
 }
 
-/* Contact form */
-
+/* -------------------- */
+/* 4. FORM ELEMENTS     */
+/* -------------------- */
 .label1 {
     display: block;
     text-align: left;
     font-size: clamp(1rem, 2vw, 1.25rem);
-    color:grey;
+    color: grey;
     margin-bottom: 5px;
 }
 
@@ -47,15 +56,14 @@ input[type=text], input[type=email], select, textarea {
     margin-bottom: clamp(10px, 2vw, 20px);
     resize: vertical;
     font-size: clamp(1rem, 2vw, 1rem);
-    color:#ee3a37;
+    color: #ee3a37;
     font-weight: 500;
 }
 
 input:focus, textarea:focus {
     border-color: #ee3a37;
-    outline: none; /* Removes default styling by browser */
+    outline: none;
 }
-
 
 textarea {
     min-height: 200px;
@@ -65,15 +73,6 @@ textarea {
     color: #ee3a37;
 }
 
-/* Add a background color and some padding around the form */
-.form {
-    border-radius: 50px;
-    padding-left:50px;
-    padding-right:50px;
-    padding-top:50px;
-    padding-bottom:50px;
-    width: clamp(90%, 800px, 100%);
-    background: white;
-    margin-top: clamp(10px, 2vw, 15px);
-    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-}
+/* -------------------- */
+/* END OF FILE          */
+/* -------------------- */

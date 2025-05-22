@@ -1,93 +1,169 @@
-/* Section styling */
+/* -------------------- */
+/* 1. SECTION COLORS    */
+/* -------------------- */
 .section1 { background-color: #3aba9b; }
 .section2 { background-color: #ffce00; }
 .section3 { background-color: #f17fb2; }
 .section4 { background-color: #ee3a37; }
 
-
-.carousel-container {
-  max-width: 800px;
-  margin: auto;
-  padding: 2rem 1rem;
-  position: relative;
-  overflow: hidden;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+/* -------------------- */
+/* 2. FLEXBOX LAYOUT    */
+/* -------------------- */
+.flexbox {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
 }
 
-.carousel-wrapper {
-  display: flex;
-  transition: transform 0.5s ease-in-out;
+.flexbox-item {
+    flex-grow: 1;
+    flex-basis: calc(33.33% - 40px);
+    max-width: 300px;
+    min-width: 25vw;
+    align-self: center;
+    text-align: justify;
+    margin: 10px;
 }
 
-.carousel-slide {
-  min-width: 100%;
-  flex-shrink: 0;
-  display: none;
-  padding: 1rem;
-  box-sizing: border-box;
+
+
+/* -------------------- */
+/* 3. NEWS FLEXBOX      */
+/* -------------------- */
+.news-flexbox {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    margin: 32px 0;
 }
 
-.carousel-slide.active {
-  display: block;
+.news-item {
+    background: white;
+    color: #222;
+    border-radius: 12px;
+    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
+    padding: 24px 20px 20px 20px;
+    max-width: 350px;
+    min-width: 220px;
+    flex: 1 1 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
-.carousel-controls {
-  text-align: center;
-  margin-top: 1rem;
+.news-item .news-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    object-position: center center;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    background: #eee;
 }
 
-.carousel-controls button {
-  font-size: 1.5rem;
-  padding: 0.3rem 1rem;
-  margin: 0 0.5rem;
-  cursor: pointer;
-  background: #ddd;
-  border: none;
-  border-radius: 4px;
+.post-title {
+    color: #333;
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+}
+
+.post-date {
+    display: inline;
+    font-size: 1.1rem;
+    color: #666;
+    font-weight: lighter;
+    margin-right: 10px;
+}
+
+.post-content {
+    font-weight: lighter;
+    color: #333;
+    font-size: 1.2rem;
+    text-align: justify;
+    margin-top: 20px;
+    /* word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto; */
 }
 
 .read-more {
   display: inline-block;
-  margin-top: 1rem;
+  margin-top: 20px;
+  font-size: 1rem;
   text-decoration: none;
-  color: #0066cc;
+  color: #0051a4;
+  transition: all 0.5s ease-in-out;
 }
 
-.carousel-image {
-  width: 100%;
-  max-height: 300px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+.read-more:hover {
+  color: #ee3a37;
+  font-weight: bold;
 }
 
-.flexbox {
-    display: flex;
-    flex-direction: row; /* Items are placed in a row */
-    flex-wrap: wrap; /* Allow items to wrap to the next line */
-    justify-content: space-evenly; /* Center items horizontally */;
-    gap: 50px;
+.read-more:active {
+  color: #ffce00;
 }
 
-.flexbox-item {
-    flex-basis: calc(33.33% - 5px); /* Default width: 1/3 of the container minus gap */
-    max-width: 300px; /* Limit the maximum width of each item */
-    text-align: justify;
-    margin: 20px; /* Add margin around items */
-}
-
-/* Media query for smaller screens */
-@media (max-width: 768px) {
-    .flexbox-item {
-        flex-basis: calc(50% - 40px); /* Adjust to 2 items per row */
+@media (max-width: 900px) {
+    .news-flexbox {
+        gap: 20px;
+    }
+    .news-item {
+        max-width: 100%;
+        min-width: 180px;
+        flex: 1 1 45%;
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+    .news-flexbox {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .news-item {
+        max-width: 100%;
+        min-width: 0;
+        flex: 1 1 100%;
+        padding: 16px 10px 14px 10px;
+    }
+    .news-item .news-image {
+        height: 120px;
+    }
+    .flexbox {
+        flex-direction: column;
+        gap: 16px;
+    }
     .flexbox-item {
-        flex-basis: 100%; /* Stack items vertically */
+        min-width: 0;
+        max-width: 100%;
+        flex-basis: 100%;
     }
 }
+
+/* -------------------- */
+/* 4. NEWS CATEGORIES   */
+/* -------------------- */
+.post-category {
+  display: inline;
+  font-size: 1rem;
+  color: #0051a4;
+  background-color: #0052a431;
+  border-radius: 50px;
+  padding: 2px 10px;
+}
+
+.post-category-sport {
+  color: #ee3a37;
+  background-color: #ee3a3744;
+}
+
+.post-category-koken {
+  color: #3aba9b;
+  background-color: #3aba9a48;
+}
+/* -------------------- */
+/* END OF FILE          */
+/* -------------------- */

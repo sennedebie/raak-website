@@ -1,9 +1,14 @@
-/* Section styling */
+/* -------------------- */
+/* 1. SECTION COLORS    */
+/* -------------------- */
 .section1 { background-color: #3aba9b; }
 .section2 { background-color: #ffce00; }
 .section3 { background-color: #f17fb2; }
 .section4 { background-color: #ee3a37; }
 
+/* -------------------- */
+/* 2. NAVIGATION ACTIVE */
+/* -------------------- */
 li .nav-button-agenda {
     text-decoration: underline;
     text-decoration-thickness: 4px;
@@ -13,3 +18,7 @@ li .nav-button-agenda {
 li .nav-button-agenda:hover {
     color: #0051a4;
 }
+
+/* -------------------- */
+/* END OF FILE          */
+/* -------------------- */

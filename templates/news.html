@@ -4,11 +4,20 @@
   href="{{ url_for('static', filename='css/news.css') }}"
 />
 {% endblock %} {% block title %}Nieuws{% endblock %} {% block content %}
-<div class="news-page">
-  <h1>Nieuws</h1>
 
+<!-- Section 1 -->
+<section class="section1">
+  <p class="title">Nieuwsberichten</h1>
+  <p class="subtitle1">uit Leerbeek-Kester</h2>
+  <p class="subtitle2">
+    Dit is Raak! Lees meer over onze recente activiteiten.
+  </p>
+
+
+<div class="form">
   {% if posts %} {% for post in posts %}
-  <article class="news-post">
+  <article>
+    <h2 class="post-title">{{ post.title }}</h2>
     {# Image if it exists #} {% if post.image_filename %}
     <img
       src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}"
@@ -17,7 +26,7 @@
     />
     {% endif %}
 
-    <h2>{{ post.title }}</h2>
+
     <p class="meta">{{ post.category }} – {{ post.date }}</p>
     <p>{{ post.content }}</p>
   </article>
@@ -25,4 +34,7 @@
   <p>Er zijn momenteel geen nieuwsberichten.</p>
   {% endif %}
 </div>
+</section>
+
+
 {% endblock%}

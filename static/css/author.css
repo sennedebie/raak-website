@@ -1,0 +1,17 @@
+.author-container {
+  max-width: 900px;
+  margin: auto;
+  padding: 2rem;
+}
+
+.news-posts-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.news-posts-table th, .news-posts-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}

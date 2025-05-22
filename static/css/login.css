@@ -1,0 +1,36 @@
+
+.login-container {
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    width: 50vw;
+    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    margin-bottom: 50px;
+    border-radius: 50px;
+}
+
+.label1 {
+    display: block;
+    text-align: left;
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: grey;
+    margin-bottom: 5px;
+}
+
+input {
+    display: block;
+    width: 100%;
+    padding: clamp(10px, 2vw, 12px);
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    box-sizing: border-box;
+    margin-top: clamp(5px, 1vw, 6px);
+    margin-bottom: clamp(10px, 2vw, 20px);
+    resize: vertical;
+    font-size: clamp(1rem, 2vw, 1rem);
+    color: #ee3a37;
+    font-weight: 500;
+}

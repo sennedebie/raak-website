@@ -1,30 +1,85 @@
-# Import necessary libraries
-from flask import Flask, render_template, request, redirect, url_for, flash
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import sqlite3
+# --------------------
+# IMPORTS & SETUP
+# --------------------
 import os
+import sqlite3
+from functools import wraps
+
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from authentication.database import get_db_connection
+from mail import send_admin_email, send_confirmation_email
 
-
-# Initialize Flask app
+# --------------------
+# FLASK APP CONFIG
+# --------------------
 app = Flask(__name__)
-app.secret_key = "qs989hkjdlq98!skw/o"  # Required for flash messages
+app.secret_key = os.getenv("SECRET_KEY")  # from .env
 
-# --- CONFIGURATION ---
-UPLOAD_FOLDER = 'static/uploads' # Folder to store uploaded files
-os.makedirs(UPLOAD_FOLDER, exist_ok=True) # Create the folder if it doesn't exist
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER # Set the upload folder in the app config
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} # Allowed file extensions
+UPLOAD_FOLDER = 'static/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
+    ''' Check if the file is allowed '''
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- ROUTES ---
+# --------------------
+# FLASK-LOGIN SETUP
+# --------------------
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"  # Redirects to /login if not logged in
 
+# --------------------
+# USER LOADER
+# --------------------
+class User(UserMixin):
+    def __init__(self, id, username, role):
+        self.id = id
+        self.username = username
+        self.role = role
+
+    @staticmethod
+    def get(user_id):
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, role FROM users WHERE id = %s", (user_id,))
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
+        if user:
+            return User(user[0], user[1], user[2])
+        return None
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get(user_id)
+
+# --------------------
+# ROLE-BASED ACCESS CONTROL
+# --------------------
+def role_required(*roles):
+    def decorator(f):
+        @wraps(f)
+        @login_required
+        def decorated_function(*args, **kwargs):
+            if not hasattr(current_user, "role") or current_user.role not in roles:
+                flash("Je hebt geen toegang tot deze pagina.", "danger")
+                return redirect(url_for("index"))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+# --------------------
+# GENERAL ROUTES
+# --------------------
 @app.route("/")
 def index():
+    ''' Fetch latest posts from database and render index page '''
     conn = sqlite3.connect('database/posts.db')
     conn.row_factory = sqlite3.Row
     posts = conn.execute('SELECT * FROM posts ORDER BY date DESC LIMIT 5').fetchall()
@@ -33,22 +88,122 @@ def index():
 
 @app.route("/nieuws", endpoint="news")
 def news():
+    ''' Fetch all posts from database and render news page '''
     conn = sqlite3.connect('database/posts.db')
     conn.row_factory = sqlite3.Row
     posts = conn.execute('SELECT * FROM posts ORDER BY date DESC').fetchall()
     conn.close()
     return render_template('news.html', posts=posts)
 
-@app.route('/admin')
-def admin():
+@app.route("/agenda", endpoint="agenda")
+def agenda():
+    ''' Render agenda page '''
+    return render_template("agenda.html")
+
+@app.route("/lid-worden", endpoint="membership")
+def membership():
+    ''' Render membership page '''
+    return render_template("membership.html")
+
+@app.route("/contact", endpoint="contact")
+def contact():
+    ''' Render contact page '''
+    return render_template("contact.html")
+
+# --------------------
+# SPECIAL ROUTES: REGISTER & LOGIN
+# --------------------
+@app.route("/register", methods=["GET", "POST"], endpoint="register")
+def register():
+    ''' Handle user registration '''
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        role = request.form.get("role", "user")  # Default: 'user'
+
+        if not username or not password:
+            flash("Username and password are required.")
+            return redirect("/register")
+
+        # Explicitly set the method to avoid scrypt issues
+        hashed_pw = generate_password_hash(password, method="pbkdf2:sha256")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        try:
+            cur.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)", (username, hashed_pw, role))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            flash("Username already taken.")
+            return redirect("/register")
+        finally:
+            cur.close()
+            conn.close()
+
+        flash("Registration successful! You can now log in.")
+        return redirect("/login")
+
+    return render_template("register.html")
+
+@app.route("/login", methods=["GET", "POST"], endpoint="login")
+def login():
+    '''Login route for users'''
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if user and check_password_hash(user[2], password):
+            session["user_id"] = user[0]
+            session["username"] = user[1]
+            session["role"] = user[3]
+            flash("Login successful.")
+            next_page = request.args.get("next")
+            if user[3] in ("admin", "author"):
+                # Redirect to next page if present, else to author
+                return redirect(next_page or url_for("author"))
+            else:
+                flash("Je hebt geen toegang tot het auteursgedeelte.", "warning")
+                return redirect(next_page or url_for("index"))
+        else:
+            flash("Invalid credentials.")
+            return redirect("/login")
+
+    return render_template("login.html")
+
+@app.route("/logout", endpoint="logout")
+def logout():
+    ''' Logout route for users '''
+    session.clear()
+    flash("You have been logged out.")
+    return redirect("/login")
+
+# --------------------
+# SPECIAL ROUTES: AUTHOR & ADMIN
+# --------------------
+
+@app.route('/author', endpoint="author")
+# @role_required('admin', 'author')
+def author():
+    ''' Admin page to manage website content '''
     conn = sqlite3.connect('database/posts.db')
     conn.row_factory = sqlite3.Row
     posts = conn.execute('SELECT * FROM posts ORDER BY date DESC').fetchall()
     conn.close()
-    return render_template('admin.html', posts=posts)
+    return render_template('author.html', posts=posts)
 
-@app.route('/admin/add', methods=['GET', 'POST'])
+@app.route('/author/add', methods=['GET', 'POST'])
+@role_required('admin', 'author')
 def add_post():
+    ''' Add new post to database '''
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
@@ -63,9 +218,9 @@ def add_post():
                 filename = secure_filename(image_file.filename)
                 image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 image_file.save(image_path)
-        else:
-            flash('Alleen afbeeldingen zijn toegestaan (jpg, jpeg, png, gif)', 'danger')
-            return redirect(request.url)
+            else:
+                flash('Alleen afbeeldingen zijn toegestaan (jpg, jpeg, png, gif)', 'danger')
+                return redirect(request.url)
 
         # Save all data including image filename
         conn = sqlite3.connect('database/posts.db')
@@ -75,12 +230,14 @@ def add_post():
         conn.close()
 
         flash('Bericht toegevoegd!', 'success')
-        return redirect(url_for('admin'))
+        return redirect(url_for('author'))
 
     return render_template('add_edit_post.html', form_title='Nieuw Bericht', post=None)
 
-@app.route('/admin/edit/<int:post_id>', methods=['GET', 'POST'])
+@app.route('/author/edit/<int:post_id>', methods=['GET', 'POST'])
+@role_required('admin', 'author')
 def edit_post(post_id):
+    ''' Edit existing post in database '''
     conn = sqlite3.connect('database/posts.db')
     conn.row_factory = sqlite3.Row
     post = conn.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
@@ -117,12 +274,14 @@ def edit_post(post_id):
         conn.close()
 
         flash('Bericht bijgewerkt!', 'success')
-        return redirect(url_for('admin'))
+        return redirect(url_for('author'))
 
     return render_template('add_edit_post.html', form_title='Bewerk Bericht', post=post)
 
-@app.route('/admin/delete/<int:post_id>')
+@app.route('/author/delete/<int:post_id>')
+@role_required('admin', 'author')
 def delete_post(post_id):
+    ''' Delete post from database '''
     conn = sqlite3.connect('database/posts.db')
     conn.row_factory = sqlite3.Row
     post = conn.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
@@ -137,23 +296,14 @@ def delete_post(post_id):
     conn.close()
 
     flash('Bericht en afbeelding verwijderd!', 'info')
-    return redirect(url_for('admin'))
+    return redirect(url_for('author'))
 
-@app.route("/agenda", endpoint="agenda")
-def agenda():
-    return render_template("agenda.html")
-
-@app.route("/lid-worden", endpoint="membership")
-def membership():
-    return render_template("membership.html")
-
-@app.route("/contact", endpoint="contact")
-def contact():
-    return render_template("contact.html")
-
+# --------------------
+# FORM HANDLERS
+# --------------------
 @app.route("/contact-form-submit", methods=["POST"])
 def contact_submit_form():
-    # Get form data
+    ''' Handle contact form submission '''
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
     email = request.form.get("email")
@@ -169,7 +319,7 @@ def contact_submit_form():
     {message}
     """
 
-    success, error = send_email(subject, body, reply_to=email)
+    success, error = send_admin_email(subject, body, reply_to=email)
     if success:
         flash("We hebben jouw bericht goed ontvangen en bezorgen je zo snel mogelijk een antwoord.", "success")
         send_confirmation_email(email, f"{firstname} {lastname}", "contact")
@@ -180,7 +330,7 @@ def contact_submit_form():
 
 @app.route("/membership-form-submit", methods=["POST"])
 def membership_submit_form():
-    # Get membership form data
+    ''' Handle membership form submission '''
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
     email = request.form.get("email")
@@ -208,7 +358,7 @@ def membership_submit_form():
     {message}
     """
 
-    success, error = send_email(subject, body, reply_to=email)
+    success, error = send_admin_email(subject, body, reply_to=email)
     if success:
         flash("We hebben je aanvraag goed ontvangen en bezorgen je zo snel mogelijk een antwoord.", "success")
         send_confirmation_email(email, f"{firstname} {lastname}", "membership")
@@ -217,74 +367,9 @@ def membership_submit_form():
 
     return redirect(url_for("membership"))
 
-# --- FUNCTIONS ---
 
-def send_email(subject, body, reply_to=None):
-    sender_email = "sennedebiechristmas@gmail.com"
-    sender_password = "eqwr wpjj pndu etei"
-    recipient_email = "sennedebie@icloud.com"
-
-    msg = MIMEMultipart()
-    msg["From"] = sender_email
-    msg["To"] = recipient_email
-    msg["Subject"] = subject
-    if reply_to:
-        msg["Reply-To"] = reply_to
-    msg.attach(MIMEText(body, "plain"))
-
-    try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient_email, msg.as_string())
-        return True, None
-    except Exception as e:
-        return False, str(e)
-
-def send_simple_email(to_email, subject, body):
-    """ Send mail via SMTP server"""
-    sender_email = "sennedebiechristmas@gmail.com"
-    sender_password = "eqwr wpjj pndu etei"
-
-    msg = MIMEMultipart()
-    msg["From"] = sender_email
-    msg["To"] = to_email
-    msg["Subject"] = subject
-    msg.attach(MIMEText(body, "plain"))
-
-    try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, to_email, msg.as_string())
-    except Exception:
-        pass  # Silently ignore confirmation mail errors
-
-def send_confirmation_email(to_email, name, form_type):
-    """ Send confirmation mail for form submissions """
-    if form_type == "contact":
-        subject = "Bevestiging van je contactaanvraag bij Raak Leerbeek-Kester"
-        body = f"""Beste {name},
-
-Bedankt voor je bericht aan Raak Leerbeek-Kester. We hebben je vraag of opmerking goed ontvangen en nemen zo snel mogelijk contact met je op.
-
-Met vriendelijke groeten,
-Het Raak Leerbeek-Kester team
-"""
-    elif form_type == "membership":
-        subject = "Bevestiging van je lidmaatschapsaanvraag bij Raak Leerbeek-Kester"
-        body = f"""Beste {name},
-
-Bedankt voor je aanvraag om lid te worden van Raak Leerbeek-Kester. We hebben je aanvraag goed ontvangen en nemen spoedig contact met je op.
-
-Met vriendelijke groeten,
-Het Raak Leerbeek-Kester team
-"""
-    else:
-        return
-
-    send_simple_email(to_email, subject, body)
-
-# Run the Flask app
+# --------------------
+# MAIN ENTRY POINT
+# --------------------
 if __name__ == "__main__":
     app.run(debug=True)
