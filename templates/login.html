@@ -5,28 +5,18 @@
 />
 {% endblock %} {% block title %}Login{% endblock %} {% block content%}
 
-<p class="subtitle1">Login</p>
+<section class="section1">
+  <p class="subtitle1">Login</p>
 
-{% with messages = get_flashed_messages() %} {% if messages %}
-
-<ul>
-  {% for message in messages %}
-  <li>{{ message }}</li>
-  {% endfor %}
-</ul>
-{% endif %} {% endwith %}
-
-<div class="login-container">
-  <form method="POST">
-    <input name="username" placeholder="Username" required /><br />
+  <form class="login-container" method="POST">
+    <input name="username" placeholder="Gebruikersnaam" required /><br />
     <input
       name="password"
       type="password"
-      placeholder="Password"
+      placeholder="Wachtwoord"
       required
     /><br />
-    <button type="submit">Login</button>
+    <button class="normal-button" type="submit">Inloggen</button>
   </form>
-</div>
-
+</section>
 {% endblock %}

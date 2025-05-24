@@ -18,6 +18,8 @@ content %}
   </a>
 </section>
 
+<hr class="section-divider" />
+
 <!-- Section 2: News overview (shows latest news posts in a responsive flexbox) -->
 <section class="section2">
   <h1>Nieuws</h1>
@@ -37,7 +39,7 @@ content %}
         class="news-image"
       />
       {% endif %}
-      <h2 class="post-title">{{ post.title }}</h2>
+      <p class="post-title">{{ post.title }}</p>
       <p>
         <span class="post-date">{{ post.date }}</span>
         <!--
@@ -57,15 +59,20 @@ content %}
     </div>
     {% endfor %}
   </div>
+  <a href="https://raakvzw.be" target="_blank" rel="noopener">
+    <button class="normal-button">Onze nieuwsberichten</button>
+  </a>
 </section>
+
+<hr class="section-divider" />
 
 <!-- Section 3: About us (organization info in flexbox columns) -->
 <section class="section3">
   <h1>Over ons</h1>
-  <div class="flexbox">
-    <div class="flexbox-item">
-      <p class="column-title1">Wie zijn we?</p>
-      <p class="main-text">
+  <div class="news-flexbox">
+    <div class="news-item">
+      <p class="post-title">Wie zijn we?</p>
+      <p class="post-content">
         Met duizenden vrijwilligers in meer dan 450 Vlaamse en Brusselse buurten
         doet Raak elke dag opnieuw buurten bruisen. Met fijne activiteiten
         brengen we buurtbewoners samen. Samen met hen werken we aan een buurt
@@ -74,9 +81,9 @@ content %}
         hun buurt, Raak de vonk die hen in gang zet.
       </p>
     </div>
-    <div class="flexbox-item">
-      <p class="column-title1">Wat doen we?</p>
-      <p class="main-text">
+    <div class="news-item">
+      <p class="post-title">Wat doen we?</p>
+      <p class="post-content">
         Meer leven in jouw buurt? Da’s helemaal Raak! Van sport tot
         gezinsactiviteiten, en van kookworkshops tot boeiende lezingen: we
         hebben het voor jou. Verbinding staat bij ons centraal: bij ons ontmoet
@@ -86,9 +93,9 @@ content %}
         beleven valt, ook voor jou.
       </p>
     </div>
-    <div class="flexbox-item">
-      <p class="column-title1">Raak voor iedereen</p>
-      <p class="main-text">
+    <div class="news-item">
+      <p class="post-title">Raak voor iedereen</p>
+      <p class="post-content">
         Welke leeftijd, achtergrond, kleur of overtuiging je ook hebt: bij ons
         ben je welkom. Je ontmoet er anderen, die soms meer ‘anders’ dan
         gelijkend zijn … of waar je net verrassend veel mee gemeen hebt. Bij ons
@@ -98,6 +105,9 @@ content %}
       </p>
     </div>
   </div>
+  <a href="https://raakvzw.be" target="_blank" rel="noopener">
+    <button class="normal-button">Meer over ons</button>
+  </a>
 </section>
 
 {% endblock%}

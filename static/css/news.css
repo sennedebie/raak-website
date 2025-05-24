@@ -2,7 +2,7 @@
 /* 1. SECTION COLORS    */
 /* -------------------- */
 .section1 { background-color: #ffce00; }
-.section2 { background-color: #ffce00; }
+.section2 { background-color: #f17fb2; }
 .section3 { background-color: #f17fb2; }
 .section4 { background-color: #ee3a37; }
 
@@ -20,59 +20,144 @@ li .nav-button-news:hover {
 }
 
 /* -------------------- */
-/* 3. TITLES & HEADINGS */
+/* 3. NEWS FLEXBOX      */
 /* -------------------- */
+.news-flexbox {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 48px 32px;
+    justify-content: space-around;
+    margin: 32px 25px;
+}
+
+.news-item {
+    background: white;
+    color: #222;
+    border-radius: 12px;
+    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
+    padding: 25px 25px;
+    max-width: 350px;
+    min-width: 220px;
+    flex: 1 1 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.news-item .news-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    object-position: center center;
+    border-radius: 8px;
+    margin-bottom: 1rem ;
+    background: #eee;
+}
+
 .post-title {
-  color: #333333;
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
-  margin-bottom: 20px;
+    color: #333;
+    font-size: 1.4rem;
+    margin-bottom: 10px;
 }
 
-.title {
-  margin-top: 50px;
+.post-date {
+    display: inline;
+    font-size: 1.1rem;
+    color: #666;
+    font-weight: lighter;
+    margin-right: 10px;
 }
 
-/* -------------------- */
-/* 4. FORMS             */
-/* -------------------- */
-.form {
-  margin-top: 80px;
+.post-content {
+    font-weight: lighter;
+    line-height: 1.5;
+
+    color: #333;
+    font-size: 1.2rem;
+    text-align: justify;
+    margin-top: 20px;
+    /* word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto; */
 }
 
-/* -------------------- */
-/* 5. NEWS META & BODY  */
-/* -------------------- */
-.news-meta {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 1rem;
-}
-
-.news-content {
+.read-more {
+  display: inline-block;
+  margin-top: 20px;
   font-size: 1rem;
-  line-height: 1.6;
+  text-decoration: none;
+  color: #0051a4;
+  transition: all 0.5s ease-in-out;
 }
 
-/* -------------------- */
-/* 6. NEWS IMAGE BANNER */
-/* -------------------- */
-.news-image {
-  width: 100%;
-  max-width: 100%;
-  height: 220px; /* Fixed height for banner effect, aspect ratio ~5:1 to 4:1 depending on container */
-  object-fit: cover; /* Ensures image covers the area like a Facebook cover */
-  object-position: center center; /* Center the image within the box */
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: block;
+.read-more:hover {
+  color: #ee3a37;
+  font-weight: bold;
+}
+
+.read-more:active {
+  color: #ffce00;
+}
+
+@media (max-width: 900px) {
+    .news-flexbox {
+        gap: 20px;
+    }
+    .news-item {
+        max-width: 100%;
+        min-width: 180px;
+        flex: 1 1 45%;
+    }
 }
 
 @media (max-width: 600px) {
-  .news-image {
-    height: 120px; /* Smaller height for mobile, aspect ratio preserved */
-  }
+    .news-flexbox {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .news-item {
+        max-width: 100%;
+        min-width: 0;
+        flex: 1 1 100%;
+        padding: 20px 20px;
+    }
+    .news-item .news-image {
+        height: 120px;
+    }
+    .flexbox {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .flexbox-item {
+        min-width: 0;
+        max-width: 100%;
+        flex-basis: 100%;
+    }
 }
+
+/* -------------------- */
+/* 4. NEWS CATEGORIES   */
+/* -------------------- */
+.post-category {
+  display: inline;
+  font-size: 1rem;
+  color: #0051a4;
+  background-color: #0052a431;
+  border-radius: 50px;
+  padding: 2px 10px;
+}
+
+.post-category-sport {
+  color: #ee3a37;
+  background-color: #ee3a3744;
+}
+
+.post-category-koken {
+  color: #3aba9b;
+  background-color: #3aba9a48;
+}
+
+
 
 /* -------------------- */
 /* END OF FILE          */

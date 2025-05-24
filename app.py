@@ -4,8 +4,7 @@
 import os
 import sqlite3
 from functools import wraps
-
-from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -82,7 +81,7 @@ def index():
     ''' Fetch latest posts from database and render index page '''
     conn = sqlite3.connect('database/posts.db')
     conn.row_factory = sqlite3.Row
-    posts = conn.execute('SELECT * FROM posts ORDER BY date DESC LIMIT 5').fetchall()
+    posts = conn.execute('SELECT * FROM posts ORDER BY date DESC LIMIT 6').fetchall()
     conn.close()
     return render_template('index.html', posts=posts)
 
@@ -122,7 +121,7 @@ def register():
         role = request.form.get("role", "user")  # Default: 'user'
 
         if not username or not password:
-            flash("Username and password are required.")
+            flash("Gebruikersnaam en wachtwoord zijn vereist.")
             return redirect("/register")
 
         # Explicitly set the method to avoid scrypt issues
@@ -134,15 +133,15 @@ def register():
         try:
             cur.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)", (username, hashed_pw, role))
             conn.commit()
-        except Exception as e:
+        except Exception:
             conn.rollback()
-            flash("Username already taken.")
+            flash("Gebruikersnaam reeds in gebruik.", "warning")
             return redirect("/register")
         finally:
             cur.close()
             conn.close()
 
-        flash("Registration successful! You can now log in.")
+        flash("Registratie gelukt. Je kan nu inloggen!")
         return redirect("/login")
 
     return render_template("register.html")
@@ -162,14 +161,15 @@ def login():
         conn.close()
 
         if user and check_password_hash(user[2], password):
-            session["user_id"] = user[0]
-            session["username"] = user[1]
-            session["role"] = user[3]
+            user_obj = User(user[0], user[1], user[3])
+            login_user(user_obj)
             flash("Login successful.")
             next_page = request.args.get("next")
             if user[3] in ("admin", "author"):
                 # Redirect to next page if present, else to author
                 return redirect(next_page or url_for("author"))
+            elif user[3] in ("member"):
+                return redirect(next_page or url_for("index"))
             else:
                 flash("Je hebt geen toegang tot het auteursgedeelte.", "warning")
                 return redirect(next_page or url_for("index"))
@@ -180,18 +180,19 @@ def login():
     return render_template("login.html")
 
 @app.route("/logout", endpoint="logout")
+@app.route("/logout", endpoint="logout")
+@login_required
 def logout():
     ''' Logout route for users '''
-    session.clear()
+    logout_user()
     flash("You have been logged out.")
     return redirect("/login")
-
 # --------------------
 # SPECIAL ROUTES: AUTHOR & ADMIN
 # --------------------
 
 @app.route('/author', endpoint="author")
-# @role_required('admin', 'author')
+@role_required('admin', 'author')
 def author():
     ''' Admin page to manage website content '''
     conn = sqlite3.connect('database/posts.db')

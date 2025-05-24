@@ -7,24 +7,25 @@
 />
 {% endblock %} {% block title %}Registratie{% endblock %} {% block content %}
 
-<form method="POST">
-  <input name="username" placeholder="Username" required /><br />
-  <input
-    name="password"
-    type="password"
-    placeholder="Password"
-    required
-  /><br />
+<section class="section1">
+  <p class="subtitle1">Registreer</p>
 
-  <label for="role">Role:</label>
-  <select name="role">
-    <option value="user" selected>user</option>
-    <option value="admin">admin</option>
-    <option value="author">author</option>
-  </select>
-  <br />
+  <form class="register-container" method="POST">
+    <input name="username" placeholder="Gebruikersnaam" required /><br />
+    <input name="password" type="password" placeholder="Wachtwoord" required />
 
-  <button type="submit">Register</button>
-</form>
+    <br />
+    <div class="role-container">
+      <label class="label1" for="role">Rol:</label>
+      <select name="role" required>
+        <option value="member" selected>Lid</option>
+        <option value="admin">Admin</option>
+        <option value="author">Auteur</option>
+      </select>
+    </div>
+    <br />
 
+    <button class="normal-button" type="submit">Registreer</button>
+  </form>
+</section>
 {% endblock%}

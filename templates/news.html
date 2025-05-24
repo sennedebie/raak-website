@@ -12,29 +12,48 @@
   <p class="subtitle2">
     Dit is Raak! Lees meer over onze recente activiteiten.
   </p>
-
-
-<div class="form">
-  {% if posts %} {% for post in posts %}
-  <article>
-    <h2 class="post-title">{{ post.title }}</h2>
-    {# Image if it exists #} {% if post.image_filename %}
-    <img
-      src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}"
-      alt="Afbeelding voor {{ post.title }}"
-      class="news-image"
-    />
-    {% endif %}
-
-
-    <p class="meta">{{ post.category }} – {{ post.date }}</p>
-    <p>{{ post.content }}</p>
-  </article>
-  {% endfor %} {% else %}
-  <p>Er zijn momenteel geen nieuwsberichten.</p>
-  {% endif %}
-</div>
 </section>
 
+<hr class="section-divider" />
+
+<!-- Section 2: News overview (shows latest news posts in a responsive flexbox) -->
+<section class="section2">
+  <!--
+    This flexbox displays the latest news posts.
+    Each post shows an image (if available), title, category/date, a truncated preview of the content,
+    and a "Lees verder" link to the full news page.
+    The preview is limited to 200 characters and ends with "..." if the content is longer.
+  -->
+  <div class="news-flexbox">
+    {% for post in posts %}
+    <div class="news-item">
+      {% if post.image_filename %}
+      <img
+        src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}"
+        alt="Afbeelding voor {{ post.title }}"
+        class="news-image"
+      />
+      {% endif %}
+      <p class="post-title">{{ post.title }}</p>
+      <p>
+        <span class="post-date">{{ post.date }}</span>
+        <!--
+        The post-category span below uses a dynamic class based on the post's category.
+        Spaces in the category are replaced with hyphens and all letters are lowercase,
+        so you can target specific categories in your CSS (e.g. .post-category-sport).
+      -->
+        <span
+          class="post-category post-category-{{ post.category|lower|replace(' ', '-') }}"
+          >{{ post.category }}</span
+        >
+      </p>
+      <p class="post-content">
+        {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
+      </p>
+      <a href="{{ url_for('news') }}" class="read-more">Lees verder →</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
 
 {% endblock%}

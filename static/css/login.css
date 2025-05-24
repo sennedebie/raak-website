@@ -1,15 +1,25 @@
+/* -------------------- */
+/* 1. SECTION COLORS    */
+/* -------------------- */
+.section1 { background-color: #f17fb2; }
+.section2 { background-color: #ffce00; }
+.section3 { background-color: #f17fb2; }
+.section4 { background-color: #ee3a37; }
+
+
 
 .login-container {
     background-color: #f4f4f4;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 50vh;
     width: 50vw;
     box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
-    margin: 0 auto;
     margin-bottom: 50px;
-    border-radius: 50px;
+    border-radius: 30px;
+    text-align: center;
 }
 
 .label1 {
@@ -22,15 +32,18 @@
 
 input {
     display: block;
-    width: 100%;
+    margin-top: 16px;
     padding: clamp(10px, 2vw, 12px);
     border: 1px solid #ccc;
     border-radius: 16px;
     box-sizing: border-box;
-    margin-top: clamp(5px, 1vw, 6px);
-    margin-bottom: clamp(10px, 2vw, 20px);
-    resize: vertical;
     font-size: clamp(1rem, 2vw, 1rem);
-    color: #ee3a37;
+    color: #0051a4;
     font-weight: 500;
+    width: 70%;
+}
+
+input:focus {
+    border-color: #0051a4;
+    outline: none;
 }

@@ -32,6 +32,12 @@
       href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Radio+Canada:ital,wght@0,300..700;1,300..700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Icon library -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
   </head>
   <body>
     <!-- ==================== -->
@@ -90,9 +96,16 @@
               >Contact</a
             >
           </li>
+          <li>
+            <a href="{{ url_for('login') }}" class="footer-link nav-user-icon">
+              <i class="fa-solid fa-user"></i>
+            </a>
+          </li>
         </ul>
       </nav>
     </header>
+
+    <hr class="section-divider" />
 
     <!-- ==================== -->
     <!-- 5. MAIN CONTENT      -->
@@ -106,18 +119,30 @@
     <!-- 6. FOOTER            -->
     <!-- ==================== -->
     <footer>
-      <p>&#169; 2025 Raak Leerbeek-Kester</p>
-      <p>
-        Creatie door
-        <a href="https://www.linkedin.com/in/sennedebie/" target="_blank"
-          ><span>Senne De Bie</span></a
-        >
-      </p>
-    </footer>
+      <div class="footer-flexbox">
+        <div class="footer-flexbox-item"></div>
 
-    <!-- ==================== -->
-    <!-- 7. SCRIPTS           -->
-    <!-- ==================== -->
-    <script src="{{ url_for('static', filename='js/carousel.js') }}"></script>
+        <div class="footer-flexbox-item">
+          <p class="footer-text">&#169; 2025 Raak Leerbeek-Kester</p>
+          <p class="footer-text">
+            Creatie door
+            <a href="https://www.linkedin.com/in/sennedebie/" target="_blank"
+              ><span>Senne De Bie</span></a
+            >
+          </p>
+        </div>
+
+        <div class="footer-flexbox-item">
+          <a
+            href="https://www.facebook.com/raakleerbeekkester"
+            target="_blank"
+            rel="noopener"
+            class="footer-link"
+          >
+            <i class="fab fa-facebook-f"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>
