@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="nl">
   <head>
-    <!-- ==================== -->
-    <!-- 1. METADATA & TITLE  -->
-    <!-- ==================== -->
+    <!-- ════════════════════════════════════════════════ -->
+    <!-- ▶ METADATA & TITLE                               -->
+    <!-- ════════════════════════════════════════════════ -->
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -15,16 +16,19 @@
 
     <title>{% block title %}Raak Leerbeek-Kester{% endblock %}</title>
 
-    <!-- ==================== -->
-    <!-- 2. STYLESHEETS       -->
-    <!-- ==================== -->
-    <!-- Global/main stylesheet -->
+    <!-- ════════════════════════════════════════════════ -->
+    <!-- ▶ CSS STYLING                                    -->
+    <!-- ════════════════════════════════════════════════ -->
+
+    <!-- Global stylesheet -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
-    <!-- Page-specific styles -->
+
+    <!-- Page specific stylesheet -->
     {% block extra_css %}{% endblock %}
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -39,16 +43,12 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
     />
   </head>
+
   <body>
-    <!-- ==================== -->
-    <!-- 3. FLASH MESSAGES    -->
-    <!-- ==================== -->
-    <!--
-      This section handles the display of flash messages in the template.
-      It retrieves flashed messages (with their categories) using Flask's `get_flashed_messages` function.
-      If there are any messages, it iterates over them and displays each message inside a div,
-      applying a CSS class based on the message category for styling purposes.
-    -->
+    <!-- ════════════════════════════════════════════════ -->
+    <!-- ▶ FLASH MESSAGES                                 -->
+    <!-- ════════════════════════════════════════════════ -->
+
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
     messages %}
     <div class="flashes">
@@ -58,9 +58,10 @@
     </div>
     {% endif %} {% endwith %}
 
-    <!-- ==================== -->
-    <!-- 4. HEADER & NAVBAR   -->
-    <!-- ==================== -->
+    <!-- ════════════════════════════════════════════════ -->
+    <!-- ▶ HEADER & NAVBAR                                -->
+    <!-- ════════════════════════════════════════════════ -->
+
     <header>
       <nav class="nav-bar">
         <div class="logo">
@@ -107,17 +108,19 @@
 
     <hr class="section-divider" />
 
-    <!-- ==================== -->
-    <!-- 5. MAIN CONTENT      -->
-    <!-- ==================== -->
+    <!-- ════════════════════════════════════════════════ -->
+    <!-- ▶ MAIN CONTENT                                   -->
+    <!-- ════════════════════════════════════════════════ -->
+
     <main>
       {% block content %} Welkom op de website van Raak Leerbeek-Kester {%
       endblock %}
     </main>
 
-    <!-- ==================== -->
-    <!-- 6. FOOTER            -->
-    <!-- ==================== -->
+    <!-- ════════════════════════════════════════════════ -->
+    <!-- ▶ FOOTER                                -->
+    <!-- ════════════════════════════════════════════════ -->
+
     <footer>
       <div class="footer-flexbox">
         <div class="footer-flexbox-item"></div>

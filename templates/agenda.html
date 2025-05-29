@@ -4,5 +4,43 @@
   href="{{ url_for('static', filename='css/agenda.css') }}"
 />
 {% endblock %} {% block title %}Agenda{% endblock %} {% block content %}
-<p>test</p>
+
+<!-- Section 1 -->
+<section class="section1">
+  <p class="title">Evenementen</h1>
+  <p class="subtitle1">in Leerbeek-Kester</h2>
+  <p class="subtitle2">
+    Ben jij ook Raak? Doe mee!
+  </p>
+</section>
+
+<hr class="section-divider" />
+
+<section class="section2">
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- ▶ EVENT ITEM STYLING TEST                        -->
+<!-- ════════════════════════════════════════════════ -->
+
+<a href="/jouw-event-url" class="event-link">
+  <div class="event-item">
+    <div class="event-date">
+      <p class="event-weekday">Zat</p>
+      <p class="event-day">23</p>
+      <p class="event-month">mei</p>
+    </div>
+    <div class="event-content">
+      <div class="event-title">
+        <p>KWB Jogging in Leerbeek</p>
+      </div>
+      <div class="event-description">
+        Dit weekend ...
+      </div>
+    </div>
+  </div>
+</a>
+
+
+</section>
+
 {% endblock%}

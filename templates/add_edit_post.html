@@ -1,6 +1,10 @@
-{% extends "base.html" %} {% block extra_css %}
-<!-- There is only one css styling file for all admin pages -->
+{% extends "base.html" %}
 
+<!-- ════════════════════════════════════════════════ -->
+<!-- ▶ PAGE SPECIFIC CSS STYLING & TITLE              -->
+<!-- ════════════════════════════════════════════════ -->
+
+{% block extra_css %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/add_edit_post.css') }}"

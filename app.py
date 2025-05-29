@@ -1,6 +1,7 @@
-# --------------------
-# IMPORTS & SETUP
-# --------------------
+# ════════════════════════════════════════════════
+# ▶ IMPORTS
+# ════════════════════════════════════════════════
+
 import os
 import sqlite3
 from functools import wraps
@@ -11,57 +12,80 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from authentication.database import get_db_connection
 from mail import send_admin_email, send_confirmation_email
 
-# --------------------
-# FLASK APP CONFIG
-# --------------------
-app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")  # from .env
 
+# ════════════════════════════════════════════════
+# ▶ FLASK APP CONFIG
+# ════════════════════════════════════════════════
+
+app = Flask(__name__)
+
+# Secret key storen in .env
+app.secret_key = os.getenv("SECRET_KEY")
+
+# Uploads (e.g. news post images)
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
-    ''' Check if the file is allowed '''
+    ''' Check if uploaded file is allowed '''
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --------------------
-# FLASK-LOGIN SETUP
-# --------------------
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "login"  # Redirects to /login if not logged in
 
-# --------------------
-# USER LOADER
-# --------------------
+# ════════════════════════════════════════════════
+# ▶ FLASK LOGIN SETUP
+# ════════════════════════════════════════════════
+
+login_manager = LoginManager() # Object to manage user sessions
+login_manager.init_app(app) # Initialize with Flask app
+login_manager.login_view = "login"  # Redirect to /login if not logged in
+
+
+# ════════════════════════════════════════════════
+# ▶ USER LOADER
+# ════════════════════════════════════════════════
 class User(UserMixin):
+    ''' User class for Flask-Login.
+    
+    Represents a user in the system with an ID, username, and role.
+    Attributes:
+        id (int): Unique identifier for the user.
+        username (str): Username of the user.
+        role (str): Role of the user (e.g., 'admin', 'author', 'member').
+    '''
     def __init__(self, id, username, role):
         self.id = id
         self.username = username
         self.role = role
 
-    @staticmethod
+
+    @staticmethod # Decorator to indicate this method does not require an instance
     def get(user_id):
-        conn = get_db_connection()
-        cur = conn.cursor()
+        ''' Fetch user from database by id '''
+        conn = get_db_connection() # Connect to database
+        cur = conn.cursor() # Create cursor object to execute SQL queries
         cur.execute("SELECT id, username, role FROM users WHERE id = %s", (user_id,))
         user = cur.fetchone()
         cur.close()
         conn.close()
         if user:
-            return User(user[0], user[1], user[2])
+            return User(user[0], user[1], user[2]) 
         return None
+
 
 @login_manager.user_loader
 def load_user(user_id):
+    ''' Load user by id stored in active session '''
     return User.get(user_id)
 
-# --------------------
-# ROLE-BASED ACCESS CONTROL
-# --------------------
+
+# ════════════════════════════════════════════════
+# ▶ ROLE-BASED ACCESS CONTROL
+# ════════════════════════════════════════════════
+
 def role_required(*roles):
+    ''' Decorator to restrict access to certain roles '''
     def decorator(f):
         @wraps(f)
         @login_required
@@ -73,48 +97,56 @@ def role_required(*roles):
         return decorated_function
     return decorator
 
-# --------------------
-# GENERAL ROUTES
-# --------------------
+
+# ════════════════════════════════════════════════
+# ▶ GENERAL ROUTES
+# ════════════════════════════════════════════════
+
 @app.route("/")
 def index():
-    ''' Fetch latest posts from database and render index page '''
+    ''' Fetch news latest posts from database and render index page '''
     conn = sqlite3.connect('database/posts.db')
-    conn.row_factory = sqlite3.Row
+    conn.row_factory = sqlite3.Row # Set row factory to return rows as dictionaries
     posts = conn.execute('SELECT * FROM posts ORDER BY date DESC LIMIT 6').fetchall()
     conn.close()
     return render_template('index.html', posts=posts)
+
 
 @app.route("/nieuws", endpoint="news")
 def news():
     ''' Fetch all posts from database and render news page '''
     conn = sqlite3.connect('database/posts.db')
-    conn.row_factory = sqlite3.Row
+    conn.row_factory = sqlite3.Row # Set row factory to return rows as dictionaries
     posts = conn.execute('SELECT * FROM posts ORDER BY date DESC').fetchall()
     conn.close()
     return render_template('news.html', posts=posts)
+
 
 @app.route("/agenda", endpoint="agenda")
 def agenda():
     ''' Render agenda page '''
     return render_template("agenda.html")
 
+
 @app.route("/lid-worden", endpoint="membership")
 def membership():
     ''' Render membership page '''
     return render_template("membership.html")
+
 
 @app.route("/contact", endpoint="contact")
 def contact():
     ''' Render contact page '''
     return render_template("contact.html")
 
-# --------------------
-# SPECIAL ROUTES: REGISTER & LOGIN
-# --------------------
+
+# ════════════════════════════════════════════════
+# ▶ SPECIAL ROUTES: REGISTER & LOGIN
+# ════════════════════════════════════════════════
+
 @app.route("/register", methods=["GET", "POST"], endpoint="register")
 def register():
-    ''' Handle user registration '''
+    ''' Register route to add new user with specified role '''
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
@@ -124,11 +156,11 @@ def register():
             flash("Gebruikersnaam en wachtwoord zijn vereist.")
             return redirect("/register")
 
-        # Explicitly set the method to avoid scrypt issues
+        # Explicitly set the method to avoid scrypt issues (deprecated in some python versions)
         hashed_pw = generate_password_hash(password, method="pbkdf2:sha256")
 
-        conn = get_db_connection()
-        cur = conn.cursor()
+        conn = get_db_connection() ### Change name to specify which database ###
+        cur = conn.cursor() # Create cursor object to execute SQL queries
 
         try:
             cur.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)", (username, hashed_pw, role))
@@ -146,15 +178,16 @@ def register():
 
     return render_template("register.html")
 
+
 @app.route("/login", methods=["GET", "POST"], endpoint="login")
 def login():
-    '''Login route for users'''
+    ''' Login route for users '''
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
 
-        conn = get_db_connection()
-        cur = conn.cursor()
+        conn = get_db_connection() ## Change name to specify which database ##
+        cur = conn.cursor() # Create cursor object to execute SQL queries
         cur.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
         cur.close()
@@ -163,7 +196,7 @@ def login():
         if user and check_password_hash(user[2], password):
             user_obj = User(user[0], user[1], user[3])
             login_user(user_obj)
-            flash("Login successful.")
+            flash("Je bent nu ingelogd.")
             next_page = request.args.get("next")
             if user[3] in ("admin", "author"):
                 # Redirect to next page if present, else to author
@@ -174,27 +207,29 @@ def login():
                 flash("Je hebt geen toegang tot het auteursgedeelte.", "warning")
                 return redirect(next_page or url_for("index"))
         else:
-            flash("Invalid credentials.")
+            flash("Gebruikersnaam of wachtwoord onjuist.", "warning")
             return redirect("/login")
 
     return render_template("login.html")
 
-@app.route("/logout", endpoint="logout")
+
 @app.route("/logout", endpoint="logout")
 @login_required
 def logout():
     ''' Logout route for users '''
     logout_user()
-    flash("You have been logged out.")
+    flash("Je bent nu uitgelogd.")
     return redirect("/login")
-# --------------------
-# SPECIAL ROUTES: AUTHOR & ADMIN
-# --------------------
+
+
+# ════════════════════════════════════════════════
+# ▶ SPECIAL ROUTES: AUTHOR
+# ════════════════════════════════════════════════
 
 @app.route('/author', endpoint="author")
 @role_required('admin', 'author')
 def author():
-    ''' Admin page to manage website content '''
+    ''' Author dashboard page to manage website content '''
     conn = sqlite3.connect('database/posts.db')
     conn.row_factory = sqlite3.Row
     posts = conn.execute('SELECT * FROM posts ORDER BY date DESC').fetchall()
@@ -204,7 +239,7 @@ def author():
 @app.route('/author/add', methods=['GET', 'POST'])
 @role_required('admin', 'author')
 def add_post():
-    ''' Add new post to database '''
+    ''' Add news post to database '''
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
@@ -234,6 +269,7 @@ def add_post():
         return redirect(url_for('author'))
 
     return render_template('add_edit_post.html', form_title='Nieuw Bericht', post=None)
+
 
 @app.route('/author/edit/<int:post_id>', methods=['GET', 'POST'])
 @role_required('admin', 'author')
@@ -279,6 +315,7 @@ def edit_post(post_id):
 
     return render_template('add_edit_post.html', form_title='Bewerk Bericht', post=post)
 
+
 @app.route('/author/delete/<int:post_id>')
 @role_required('admin', 'author')
 def delete_post(post_id):
@@ -299,9 +336,11 @@ def delete_post(post_id):
     flash('Bericht en afbeelding verwijderd!', 'info')
     return redirect(url_for('author'))
 
-# --------------------
-# FORM HANDLERS
-# --------------------
+
+# ════════════════════════════════════════════════
+# ▶ FORM HANDLERS
+# ════════════════════════════════════════════════
+
 @app.route("/contact-form-submit", methods=["POST"])
 def contact_submit_form():
     ''' Handle contact form submission '''
@@ -328,6 +367,7 @@ def contact_submit_form():
         flash(f"Er is een fout opgetreden!: {error}", "danger")
 
     return redirect(url_for("contact"))
+
 
 @app.route("/membership-form-submit", methods=["POST"])
 def membership_submit_form():
@@ -368,9 +408,11 @@ def membership_submit_form():
 
     return redirect(url_for("membership"))
 
+# ════════════════════════════════════════════════
+# ▶ MAIN ENTRY POINT
+# ════════════════════════════════════════════════
 
-# --------------------
-# MAIN ENTRY POINT
-# --------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
+    
