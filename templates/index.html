@@ -1,4 +1,10 @@
-{% extends "base.html" %} {% block extra_css %}
+{% extends "base.html" %}
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- ▶ PAGE SPECIFIC CSS STYLING & TITLE              -->
+<!-- ════════════════════════════════════════════════ -->
+
+{% block extra_css %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/index.css') }}"

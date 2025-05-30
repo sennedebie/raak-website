@@ -33,10 +33,6 @@ li .nav-button-agenda:hover {
 /* ▶ EVENT ITEM STYLING TEST                        */
 /* ════════════════════════════════════════════════ */
 
-a {
-    text-decoration: none;
-}
-
 .event-item {
     color: black;
     background-color: white;

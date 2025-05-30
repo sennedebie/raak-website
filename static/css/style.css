@@ -9,6 +9,18 @@
     font-family: 'Radio Canada';
 }
 
+a {
+    color: #0051a4;
+    text-decoration: none;
+    transition: all 0.5s;
+}
+
+a:hover {
+    color: #0051a4;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
 
 /* ════════════════════════════════════════════════ */
 /* ▶ HEADER & NAVBAR                                */
@@ -152,11 +164,6 @@ h1 {
     color: #2a26266a;
 }
 
-a {
-    color: #0051a4;
-    text-decoration: underline;
-    text-underline-offset: 5px;
-}
 
 
 /* ════════════════════════════════════════════════ */

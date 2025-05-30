@@ -1,12 +1,16 @@
-/* -------------------- */
-/* 1. SECTION COLORS    */
-/* -------------------- */
+/* ════════════════════════════════════════════════ */
+/* ▶ SECTION STYLING                                */
+/* ════════════════════════════════════════════════ */
+
 .section1 { background-color: #f17fb2; }
 .section2 { background-color: #ffce00; }
 .section3 { background-color: #f17fb2; }
 .section4 { background-color: #ee3a37; }
 
 
+/* ════════════════════════════════════════════════ */
+/* ▶ LOGIN CONTAINER                                */
+/* ════════════════════════════════════════════════ */
 
 .login-container {
     background-color: #f4f4f4;
