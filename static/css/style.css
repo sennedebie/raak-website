@@ -1,6 +1,7 @@
-/* -------------------- */
-/* 1. RESET & BASE FONT */
-/* -------------------- */
+/* ════════════════════════════════════════════════ */
+/* ▶ RESET & BASE FONT                              */
+/* ════════════════════════════════════════════════ */
+
 * {
     margin: 0;
     padding: 0;
@@ -8,17 +9,16 @@
     font-family: 'Radio Canada';
 }
 
-/* -------------------- */
-/* 2. LAYOUT STRUCTURE  */
-/* -------------------- */
 
-/* Header */
+/* ════════════════════════════════════════════════ */
+/* ▶ HEADER & NAVBAR                                */
+/* ════════════════════════════════════════════════ */
+
 header {
     padding: 10px 10%;
     background-color: #ee3a37;
 }
 
-/* Navbar */
 .nav-bar {
     display: flex;
     justify-content: space-between;
@@ -56,7 +56,11 @@ header {
     color: #ffce00;
 }
 
-/* Hamburger menu button - hidden by default */
+
+/* ════════════════════════════════════════════════ */
+/* ▶ MENU BUTTONS - HIDDEN BY DEFAULT               */
+/* ════════════════════════════════════════════════ */
+
 .menu-toggle {
     display: none;
     background: none;
@@ -67,9 +71,11 @@ header {
     z-index: 1001;
 }
 
-/* -------------------- */
-/* 3. SECTION STYLING   */
-/* -------------------- */
+
+/* ════════════════════════════════════════════════ */
+/* ▶ SECTION STYLING                                */
+/* ════════════════════════════════════════════════ */
+
 section {
     min-height: 100vh;
     display: flex;
@@ -85,11 +91,11 @@ section {
     padding-right: clamp(2px, 1vw, 5px);
 }
 
-/* -------------------- */
-/* 4. TYPOGRAPHY        */
-/* -------------------- */
 
-/* Headings */
+/* ════════════════════════════════════════════════ */
+/* ▶ TYPOGRAPHY                                     */
+/* ════════════════════════════════════════════════ */
+
 h1 {
     font-size: clamp(1.5rem, 5vw, 3rem);
     margin-top: clamp(20px, 1vw, 50px);
@@ -126,7 +132,6 @@ h1 {
     font-weight: bold;
 }
 
-/* Main text */
 .main-text {
     font-size: clamp(1rem, 1.5vw, 2rem);
     font-weight: 400;
@@ -138,7 +143,6 @@ h1 {
     hyphens: auto;
 }
 
-/* Form text */
 .form-text {
     text-align: left;
     margin: 2.5vh;
@@ -148,16 +152,17 @@ h1 {
     color: #2a26266a;
 }
 
-/* Anchor elements */
 a {
     color: #0051a4;
     text-decoration: underline;
     text-underline-offset: 5px;
 }
 
-/* -------------------- */
-/* 5. BUTTONS           */
-/* -------------------- */
+
+/* ════════════════════════════════════════════════ */
+/* ▶ BUTTONS                                        */
+/* ════════════════════════════════════════════════ */
+
 .normal-button {
     margin-top: 1rem;
     margin-bottom: 1rem;
@@ -181,9 +186,10 @@ a {
     background-color: #ffce00;
 }
 
-/* -------------------- */
-/* 6. FORMS             */
-/* -------------------- */
+/* ════════════════════════════════════════════════ */
+/* ▶ FORMS                                          */
+/* ════════════════════════════════════════════════ */
+
 .form {
     border-radius: 50px;
     padding: 50px;
@@ -193,9 +199,11 @@ a {
     box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* -------------------- */
-/* 7. FOOTER            */
-/* -------------------- */
+
+/* ════════════════════════════════════════════════ */
+/* ▶ FOOTER                                         */
+/* ════════════════════════════════════════════════ */
+
 footer {
     margin: 2.5vh;
 }
@@ -266,9 +274,11 @@ footer li {
   outline: none;
 }
 
-/* -------------------- */
-/* 8. FLASH MESSAGES    */
-/* -------------------- */
+
+/* ════════════════════════════════════════════════ */
+/* ▶ FLASH MESSAGES                                 */
+/* ════════════════════════════════════════════════ */
+
 .flash {
     padding: 1em 1.5em;
     margin: 1em auto;
@@ -291,9 +301,10 @@ footer li {
     border: 1px solid #f5c6cb;
 }
 
-/* -------------------- */
-/* 9. RESPONSIVE NAVBAR */
-/* -------------------- */
+/* ════════════════════════════════════════════════ */
+/* ▶ RESPONSIVE NAVBAR                              */
+/* ════════════════════════════════════════════════ */
+
 @media (max-width: 768px) {
     .nav-bar {
         position: relative;
@@ -328,17 +339,14 @@ footer li {
     }
 }
 
-/* -------------------- */
-/* SECTION DIVIDER      */
-/* -------------------- */
+
+/* ════════════════════════════════════════════════ */
+/* ▶ SECTION DIVIDER                                */
+/* ════════════════════════════════════════════════ */
+
 .section-divider {
   border: none;
   height: 2px;
   background: #ffffff; /* Choose your color */
   width: 100%;
 }
-
-/* -------------------- */
-/* END OF FILE          */
-/* -------------------- */
-

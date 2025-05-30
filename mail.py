@@ -1,11 +1,16 @@
+# ════════════════════════════════════════════════
+# ▶ IMPORTS
+# ════════════════════════════════════════════════
 
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# --------------------
-# EMAIL FUNCTIONS
-# --------------------
+
+# ════════════════════════════════════════════════
+# ▶ EMAIL FUNCTIONS
+# ════════════════════════════════════════════════
+
 def send_admin_email(subject, body, reply_to=None):
     ''' Send email to admin via SMTP server '''
     sender_email = "sennedebiechristmas@gmail.com"

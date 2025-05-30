@@ -1,7 +1,6 @@
 # ════════════════════════════════════════════════
 # ▶ IMPORTS
 # ════════════════════════════════════════════════
-
 import os
 import sqlite3
 from functools import wraps
@@ -9,8 +8,13 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from authentication.database import get_db_connection
+from database.db_connection import get_db_connection
 from mail import send_admin_email, send_confirmation_email
+
+
+# ════════════════════════════════════════════════
+# ▶ FLASK APP CONFIG
+# ════════════════════════════════════════════════
 
 
 # ════════════════════════════════════════════════
@@ -37,10 +41,9 @@ def allowed_file(filename):
 # ▶ FLASK LOGIN SETUP
 # ════════════════════════════════════════════════
 
-login_manager = LoginManager() # Object to manage user sessions
-login_manager.init_app(app) # Initialize with Flask app
-login_manager.login_view = "login"  # Redirect to /login if not logged in
-
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"  # Redirects to /login if not logged in
 
 # ════════════════════════════════════════════════
 # ▶ USER LOADER
@@ -81,7 +84,7 @@ def load_user(user_id):
 
 
 # ════════════════════════════════════════════════
-# ▶ ROLE-BASED ACCESS CONTROL
+# ▶ ROLE BASED ACCESS CONTROL
 # ════════════════════════════════════════════════
 
 def role_required(*roles):
@@ -96,6 +99,11 @@ def role_required(*roles):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+
+# ════════════════════════════════════════════════
+# ▶ GENERAL ROUTES
+# ════════════════════════════════════════════════
 
 
 # ════════════════════════════════════════════════
@@ -144,6 +152,11 @@ def contact():
 # ▶ SPECIAL ROUTES: REGISTER & LOGIN
 # ════════════════════════════════════════════════
 
+
+# ════════════════════════════════════════════════
+# ▶ SPECIAL ROUTES: REGISTER & LOGIN
+# ════════════════════════════════════════════════
+
 @app.route("/register", methods=["GET", "POST"], endpoint="register")
 def register():
     ''' Register route to add new user with specified role '''
@@ -177,6 +190,7 @@ def register():
         return redirect("/login")
 
     return render_template("register.html")
+
 
 
 @app.route("/login", methods=["GET", "POST"], endpoint="login")
@@ -223,7 +237,7 @@ def logout():
 
 
 # ════════════════════════════════════════════════
-# ▶ SPECIAL ROUTES: AUTHOR
+# ▶ SPECIAL ROUTES: AUTHOR & ADMIN
 # ════════════════════════════════════════════════
 
 @app.route('/author', endpoint="author")
@@ -235,6 +249,7 @@ def author():
     posts = conn.execute('SELECT * FROM posts ORDER BY date DESC').fetchall()
     conn.close()
     return render_template('author.html', posts=posts)
+
 
 @app.route('/author/add', methods=['GET', 'POST'])
 @role_required('admin', 'author')
@@ -407,6 +422,10 @@ def membership_submit_form():
         flash(f"Er is een fout opgetreden: {error}", "danger")
 
     return redirect(url_for("membership"))
+
+# ════════════════════════════════════════════════
+# ▶ MAIN ENTRY POINT
+# ════════════════════════════════════════════════
 
 # ════════════════════════════════════════════════
 # ▶ MAIN ENTRY POINT
