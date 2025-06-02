@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="nl">
-  <head>
-    <!-- ════════════════════════════════════════════════ -->
-    <!-- ▶ METADATA & TITLE                               -->
-    <!-- ════════════════════════════════════════════════ -->
+  <!-- ════════════════════════════════════════════════ -->
+  <!-- ▶ METADATA & TITLE                               -->
+  <!-- ════════════════════════════════════════════════ -->
 
+  <head>
+    <!-- ==================== -->
+    <!-- 1. METADATA & TITLE  -->
+    <!-- ==================== -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -16,19 +19,16 @@
 
     <title>{% block title %}Raak Leerbeek-Kester{% endblock %}</title>
 
-    <!-- ════════════════════════════════════════════════ -->
-    <!-- ▶ CSS STYLING                                    -->
-    <!-- ════════════════════════════════════════════════ -->
-
-    <!-- Global stylesheet -->
+    <!-- ==================== -->
+    <!-- 2. STYLESHEETS       -->
+    <!-- ==================== -->
+    <!-- Global/main stylesheet -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
-
-    <!-- Page specific stylesheet -->
+    <!-- Page-specific styles -->
     {% block extra_css %}{% endblock %}
-
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -93,6 +93,11 @@
             >
           </li>
           <li>
+            <a class="nav-button-about-us" href="{{ url_for('about') }}"
+              >Over ons</a
+            >
+          </li>
+          <li>
             <a class="nav-button-contact" href="{{ url_for('contact') }}"
               >Contact</a
             >
@@ -117,10 +122,9 @@
       endblock %}
     </main>
 
-    <!-- ════════════════════════════════════════════════ -->
-    <!-- ▶ FOOTER                                -->
-    <!-- ════════════════════════════════════════════════ -->
-
+    <!-- ==================== -->
+    <!-- 6. FOOTER            -->
+    <!-- ==================== -->
     <footer>
       <div class="footer-flexbox">
         <div class="footer-flexbox-item"></div>

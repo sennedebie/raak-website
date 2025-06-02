@@ -1,0 +1,94 @@
+
+/* ════════════════════════════════════════════════ */
+/* ▶ SECTION STYLING                                */
+/* ════════════════════════════════════════════════ */
+
+.section1 { background-color: #3aba9b; }
+.section2 { background-color: #ee3a37; }
+.section3 { background-color: #f17fb2; }
+.section4 { background-color: #ee3a37; }
+
+
+/* ════════════════════════════════════════════════ */
+/* ▶ NAVBAR STYLING: ACTIVE PAGE                    */
+/* ════════════════════════════════════════════════ */
+
+li .nav-button-about-us {
+    text-decoration: underline;
+    text-decoration-thickness: 4px;
+    text-underline-offset: 6px;
+}
+
+li .nav-button-agenda:hover {
+    color: #0051a4;
+}
+
+
+/* ════════════════════════════════════════════════ */
+/* ▶ EVENT ITEM STYLING TEST                        */
+/* ════════════════════════════════════════════════ */
+
+.event-item {
+    color: black;
+    background-color: white;
+    display: flex;
+    align-items: stretch;
+    gap: 50px;
+    /* border: 2px solid #ee3a37; */
+    border-radius: 30px;
+    width: 70vw;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
+
+}
+
+.event-date {
+    display: inline-block;
+    /* border: 2px solid #37ee4f; */
+}
+
+.event-weekday {
+    font-weight:lighter;
+    font-size: 20px;
+}
+
+.event-day {
+    font-weight: bold;
+    font-size: 30px
+}
+
+.event-month {
+    font-weight: lighter;
+    font-size: 20px
+}
+
+.event-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-around;
+    /* border: 2px solid #3740ee; */
+    text-align: left;
+}
+
+.event-title {
+    /* border: 2px solid #37e8ee; */
+    font-size: 20px;
+    font-weight: 700;
+
+
+}
+
+.event-description {
+    /* border: 2px solid #eeb437; */
+    font-size: 15px;
+    font-weight: lighter;
+
+}
+
+
+
+

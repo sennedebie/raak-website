@@ -112,13 +112,12 @@ def role_required(*roles):
 
 @app.route("/")
 def index():
-    ''' Fetch news latest posts from database and render index page '''
+    ''' Fetch latest posts from database and render index page '''
     conn = sqlite3.connect('database/posts.db')
-    conn.row_factory = sqlite3.Row # Set row factory to return rows as dictionaries
+    conn.row_factory = sqlite3.Row
     posts = conn.execute('SELECT * FROM posts ORDER BY date DESC LIMIT 6').fetchall()
     conn.close()
     return render_template('index.html', posts=posts)
-
 
 @app.route("/nieuws", endpoint="news")
 def news():
@@ -140,7 +139,6 @@ def agenda():
 def membership():
     ''' Render membership page '''
     return render_template("membership.html")
-
 
 @app.route("/contact", endpoint="contact")
 def contact():
