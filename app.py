@@ -264,13 +264,6 @@ def about_us():
 def contact():
     ''' Contact page '''
     return render_template("contact.html")
-
-
-# ════════════════════════════════════════════════
-# ▶ SPECIAL ROUTES: REGISTER & LOGIN
-# ════════════════════════════════════════════════
-
-
 # ════════════════════════════════════════════════
 # ▶ SPECIAL ROUTES: REGISTER & LOGIN
 # ════════════════════════════════════════════════
