@@ -2,84 +2,111 @@
 # ▶ IMPORTS
 # ════════════════════════════════════════════════
 import os
-import sqlite3
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from database.db_connection import get_db_connection
-from mail import send_admin_email, send_confirmation_email
+from mail import (send_admin_email, send_confirmation_email, get_contact_mail_content, get_membership_mail_content)
+from dotenv import load_dotenv
 
-
-# ════════════════════════════════════════════════
-# ▶ FLASK APP CONFIG
-# ════════════════════════════════════════════════
 
 
 # ════════════════════════════════════════════════
-# ▶ FLASK APP CONFIG
+# ▶ INITIATE FLASK APP
 # ════════════════════════════════════════════════
+
+load_dotenv() # Load environment variables from .env file
 
 app = Flask(__name__)
-
-# Secret key storen in .env
-app.secret_key = os.getenv("SECRET_KEY")
-
-# Uploads (e.g. news post images)
-UPLOAD_FOLDER = 'static/uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def allowed_file(filename):
-    ''' Check if uploaded file is allowed '''
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-# ════════════════════════════════════════════════
-# ▶ FLASK LOGIN SETUP
-# ════════════════════════════════════════════════
+app.secret_key = os.getenv("SECRET_KEY", "dev")  # Use your .env secret
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static', 'uploads')
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"  # Redirects to /login if not logged in
+login_manager.login_view = "login"
+
 
 # ════════════════════════════════════════════════
-# ▶ USER LOADER
+# ▶ USER MODEL
 # ════════════════════════════════════════════════
 class User(UserMixin):
-    ''' User class for Flask-Login.
-    
-    Represents a user in the system with an ID, username, and role.
-    Attributes:
-        id (int): Unique identifier for the user.
-        username (str): Username of the user.
-        role (str): Role of the user (e.g., 'admin', 'author', 'member').
-    '''
-    def __init__(self, id, username, role):
+    def __init__(self, id, username, first_name, last_name, roles, permissions, is_active=True):
+        '''
+        Constructor to initialize user object.
+        
+        Called upon instantiation of a user object
+        (e.g. new user registration, login, request from Flask-Login).
+        '''
+
         self.id = id
         self.username = username
-        self.role = role
+        self.first_name = first_name
+        self.last_name = last_name
+        self.roles = roles  # List of role names
+        self.permissions = permissions  # List of permission names
+        self._is_active = is_active  # Use a private attribute
 
 
-    @staticmethod # Decorator to indicate this method does not require an instance
+    @property
+    def is_active(self):
+        return self._is_active
+
+    @staticmethod
     def get(user_id):
-        ''' Fetch user from database by id '''
-        conn = get_db_connection() # Connect to database
-        cur = conn.cursor() # Create cursor object to execute SQL queries
-        cur.execute("SELECT id, username, role FROM users WHERE id = %s", (user_id,))
-        user = cur.fetchone()
-        cur.close()
-        conn.close()
-        if user:
-            return User(user[0], user[1], user[2]) 
-        return None
+        '''
+        Fetch user object from database.
+        
+        Used in Flask-Login to load current user from session, 
+        so that every request has access to user's roles, permissions and active status.
+        '''
+
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor()
+
+            # Fetch user record form database
+            cur.execute("SELECT id, username, first_name, last_name, is_active FROM users WHERE id = %s", (user_id,))
+            user = cur.fetchone()
+            if not user:
+                return None
+            
+            # Get all roles for this user
+            cur.execute("""
+                SELECT r.name FROM roles r
+                JOIN user_role_map urm ON r.id = urm.role_id
+                WHERE urm.user_id = %s
+            """, (user_id,))
+            roles = [row['name'] for row in cur.fetchall()]
+
+            # Get all permissions for this user
+            cur.execute("""
+                SELECT DISTINCT p.name FROM permissions p
+                JOIN role_permission_map rpm ON p.id = rpm.permission_id
+                JOIN user_role_map urm ON rpm.role_id = urm.role_id
+                WHERE urm.user_id = %s
+            """, (user_id,))
+            permissions = [row['name'] for row in cur.fetchall()]
+
+        finally:
+            cur.close()
+            conn.close()
+
+        # Return user object
+        return User(user["id"], user["username"], user["first_name"], user["last_name"], roles, permissions, user["is_active"])
+    
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    ''' Load user by id stored in active session '''
+    '''
+    Load user from database by id for Flask-Login.
+    
+    Called by Flask-Login when authentication is required
+    (e.g. route decorators)
+    '''
     return User.get(user_id)
 
 
@@ -88,12 +115,70 @@ def load_user(user_id):
 # ════════════════════════════════════════════════
 
 def role_required(*roles):
-    ''' Decorator to restrict access to certain roles '''
+    """
+    Decorator to restrict access to routes based on user roles.
+
+    This decorator ensures that the current user is authenticated, active,
+    and has at least one of the specified roles. If the user does not meet
+    these criteria, they are redirected to the index page with an error message.
+
+    Usage:
+        @role_required('admin', 'editor')
+        def protected_route():
+            ...
+
+    Args:
+        *roles: One or more role names (as strings) that are allowed to access the route.
+
+    Returns:
+        The decorated function, which will only execute if the user has the required role(s).
+    """
+    
     def decorator(f):
         @wraps(f)
         @login_required
         def decorated_function(*args, **kwargs):
-            if not hasattr(current_user, "role") or current_user.role not in roles:
+            if (
+                current_user is None or not hasattr(current_user, "roles")
+                or not any(role in current_user.roles for role in roles)
+                or current_user is None
+                or not getattr(current_user, "is_active", False)
+            ):
+                flash("Je hebt geen toegang tot deze pagina.", "danger")
+                return redirect(url_for("index"))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+def permission_required(*permissions):
+    """
+    Decorator to restrict access to routes based on user permissions.
+
+    This decorator ensures that the current user is authenticated, active,
+    and has at least one of the specified permissions. If the user does not meet
+    these criteria, they are redirected to the index page with an error message.
+
+    Usage:
+        @permission_required('edit_post', 'delete_post')
+        def protected_route():
+            ...
+
+    Args:
+        *permissions: One or more permission names (as strings) that are allowed to access the route.
+
+    Returns:
+        The decorated function, which will only execute if the user has the required permission(s).
+    """
+    def decorator(f):
+        @wraps(f)
+        @login_required
+        def decorated_function(*args, **kwargs):
+            if (
+                not hasattr(current_user, "permissions")
+                or not any(p in current_user.permissions for p in permissions)
+                or not getattr(current_user, "is_active", False)
+            ):
                 flash("Je hebt geen toegang tot deze pagina.", "danger")
                 return redirect(url_for("index"))
             return f(*args, **kwargs)
@@ -105,44 +190,79 @@ def role_required(*roles):
 # ▶ GENERAL ROUTES
 # ════════════════════════════════════════════════
 
-
-# ════════════════════════════════════════════════
-# ▶ GENERAL ROUTES
-# ════════════════════════════════════════════════
-
 @app.route("/")
 def index():
-    ''' Fetch latest posts from database and render index page '''
-    conn = sqlite3.connect('database/posts.db')
-    conn.row_factory = sqlite3.Row
-    posts = conn.execute('SELECT * FROM posts ORDER BY date DESC LIMIT 6').fetchall()
+    ''' 
+    Home page.
+    
+    Fetch recent posts from database and render page.
+    '''
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM posts WHERE is_pinned = %s ORDER BY created_at DESC', (True,))
+    posts = cur.fetchall()
+    cur.close()
     conn.close()
     return render_template('index.html', posts=posts)
 
+
 @app.route("/nieuws", endpoint="news")
 def news():
-    ''' Fetch all posts from database and render news page '''
-    conn = sqlite3.connect('database/posts.db')
-    conn.row_factory = sqlite3.Row # Set row factory to return rows as dictionaries
-    posts = conn.execute('SELECT * FROM posts ORDER BY date DESC').fetchall()
+    '''
+    News page.
+    
+    Fetch all posts from database and render page
+    '''
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM posts ORDER BY is_pinned DESC, created_at DESC')
+    posts = cur.fetchall()
+    cur.close()
     conn.close()
     return render_template('news.html', posts=posts)
 
 
+
 @app.route("/agenda", endpoint="agenda")
 def agenda():
-    ''' Render agenda page '''
+    ''' Agenda page '''
     return render_template("agenda.html")
+
 
 
 @app.route("/lid-worden", endpoint="membership")
 def membership():
-    ''' Render membership page '''
+    ''' Membership page '''
     return render_template("membership.html")
+
+
+@app.route("/over-ons", endpoint="about")
+def about_us():
+    '''
+    About us page.
+    
+    Fetch board members from database and render page.
+    '''
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT u.username, u.function, u.about_me
+        FROM users u
+        JOIN user_role_map urm ON u.id = urm.user_id
+        JOIN roles r ON r.id = urm.role_id
+            WHERE r.name = %s 
+              AND u.is_active = %s
+        """, ('bestuurslid', True)
+        )
+    board_members = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template("about_us.html", board_members=board_members)
+
 
 @app.route("/contact", endpoint="contact")
 def contact():
-    ''' Render contact page '''
+    ''' Contact page '''
     return render_template("contact.html")
 
 
@@ -157,69 +277,116 @@ def contact():
 
 @app.route("/register", methods=["GET", "POST"], endpoint="register")
 def register():
-    ''' Register route to add new user with specified role '''
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        role = request.form.get("role", "user")  # Default: 'user'
+    ''' Add new user to database. '''
 
-        if not username or not password:
-            flash("Gebruikersnaam en wachtwoord zijn vereist.")
-            return redirect("/register")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Exclude 'super' from the roles list
+    cur.execute("SELECT name FROM roles WHERE name != %s", ('super',))
+    roles = [row["name"] for row in cur.fetchall()]
 
-        # Explicitly set the method to avoid scrypt issues (deprecated in some python versions)
-        hashed_pw = generate_password_hash(password, method="pbkdf2:sha256")
+    try:
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "")
+            email = request.form.get("email")
+            is_active = request.form.get("is_active", True)
+            selected_roles = request.form.getlist("role")
 
-        conn = get_db_connection() ### Change name to specify which database ###
-        cur = conn.cursor() # Create cursor object to execute SQL queries
+            # Ensure username and password are not empty
+            if not username or not password:
+                flash("Gebruikersnaam en wachtwoord zijn vereist.")
+                return render_template("register.html", roles=roles)
 
-        try:
-            cur.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)", (username, hashed_pw, role))
+            # Ensure at least one role is selected
+            if not selected_roles:
+                flash("Minstens één rol is vereist.")
+                return render_template("register.html", roles=roles)
+
+            # Check if username already exists
+            cur.execute("SELECT id FROM users WHERE username = %s", (username,))
+            if cur.fetchone():
+                flash("Deze gebruikersnaam bestaat al. Kies een andere gebruikersnaam.", "warning")
+                return render_template("register.html", roles=roles)
+
+            # Hash password before storing in database
+            password_hash = generate_password_hash(password, method="pbkdf2:sha256")
+
+            # Insert new user into users table and return id
+            cur.execute(
+                "INSERT INTO users (username, password_hash, email, is_active) VALUES (%s, %s, %s, %s) RETURNING id",
+                (username, password_hash, email, is_active)
+            )
+            user_id = cur.fetchone()["id"]
+
+            # Insert into user_role_map for each selected role
+            for role in selected_roles:
+                cur.execute("SELECT id FROM roles WHERE name = %s", (role,))
+                role_row = cur.fetchone()
+                if not role_row:
+                    raise Exception(f"Role '{role}' not found.")
+                role_id = role_row["id"]
+                cur.execute(
+                    "INSERT INTO user_role_map (user_id, role_id) VALUES (%s, %s)",
+                    (user_id, role_id)
+                )
             conn.commit()
-        except Exception:
-            conn.rollback()
-            flash("Gebruikersnaam reeds in gebruik.", "warning")
-            return redirect("/register")
-        finally:
-            cur.close()
-            conn.close()
+            flash("Registratie gelukt. Je kan nu inloggen!")
+            return redirect("/login")
 
-        flash("Registratie gelukt. Je kan nu inloggen!")
-        return redirect("/login")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "warning")
+        return render_template("register.html", roles=roles)
+    
+    finally:
+        cur.close()
+        conn.close()
 
-    return render_template("register.html")
-
+    return render_template("register.html", roles=roles)
 
 
 @app.route("/login", methods=["GET", "POST"], endpoint="login")
 def login():
-    ''' Login route for users '''
+    '''Login route for users'''
+
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
 
-        conn = get_db_connection() ## Change name to specify which database ##
-        cur = conn.cursor() # Create cursor object to execute SQL queries
-        cur.execute("SELECT id, username, password_hash, role FROM users WHERE username = %s", (username,))
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, password_hash FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
         cur.close()
         conn.close()
 
-        if user and check_password_hash(user[2], password):
-            user_obj = User(user[0], user[1], user[3])
+        # Check if user exists in database
+        if not user:
+            flash("Ongeldige logingegevens.")
+            return redirect("/login")
+
+        # Check provided password against hash stored in database
+        if user and check_password_hash(user["password_hash"], password):
+
+            # Use User.get to fetch roles and permissions
+            user_obj = User.get(user["id"])
+            if user_obj is None:
+                flash("Gebruiker niet gevonden of niet actief.", "warning")
+                return redirect("/login")
             login_user(user_obj)
-            flash("Je bent nu ingelogd.")
+            flash(f"Welkom {user_obj.first_name} {user_obj.last_name}")
             next_page = request.args.get("next")
-            if user[3] in ("admin", "author"):
-                # Redirect to next page if present, else to author
-                return redirect(next_page or url_for("author"))
-            elif user[3] in ("member"):
+
+            # Redirect based on role
+            if any(r in ("super", "admin", "auteur", "redacteur") for r in user_obj.roles):
                 return redirect(next_page or url_for("index"))
             else:
-                flash("Je hebt geen toegang tot het auteursgedeelte.", "warning")
+                flash("Je hebt geen toegang.", "warning")
+                flash(user_obj.roles)
                 return redirect(next_page or url_for("index"))
         else:
-            flash("Gebruikersnaam of wachtwoord onjuist.", "warning")
+            flash("Ongeldige logingegevens.")
             return redirect("/login")
 
     return render_template("login.html")
@@ -238,17 +405,22 @@ def logout():
 # ▶ SPECIAL ROUTES: AUTHOR & ADMIN
 # ════════════════════════════════════════════════
 
+
+# To be delete -> Centralized dashboard for all special users
 @app.route('/author', endpoint="author")
 @role_required('admin', 'author')
 def author():
-    ''' Author dashboard page to manage website content '''
-    conn = sqlite3.connect('database/posts.db')
-    conn.row_factory = sqlite3.Row
-    posts = conn.execute('SELECT * FROM posts ORDER BY date DESC').fetchall()
+    ''' Admin page to manage website content '''
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM posts ORDER BY created_at DESC')
+    posts = cur.fetchall()
+    cur.close()
     conn.close()
     return render_template('author.html', posts=posts)
 
 
+# To be changed
 @app.route('/author/add', methods=['GET', 'POST'])
 @role_required('admin', 'author')
 def add_post():
@@ -259,7 +431,7 @@ def add_post():
         category = request.form['category']
         date = request.form['date']
 
-        image_file = request.files.get('image')  # Get uploaded file
+        image_file = request.files.get('image')
         filename = None
 
         if image_file and image_file.filename != '':
@@ -271,11 +443,12 @@ def add_post():
                 flash('Alleen afbeeldingen zijn toegestaan (jpg, jpeg, png, gif)', 'danger')
                 return redirect(request.url)
 
-        # Save all data including image filename
-        conn = sqlite3.connect('database/posts.db')
-        conn.execute('INSERT INTO posts (title, content, category, date, image_filename) VALUES (?, ?, ?, ?, ?)',
-                     (title, content, category, date, filename))
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('INSERT INTO posts (title, content, category, date, image_filename) VALUES (%s, %s, %s, %s, %s)',
+                    (title, content, category, date, filename))
         conn.commit()
+        cur.close()
         conn.close()
 
         flash('Bericht toegevoegd!', 'success')
@@ -283,14 +456,14 @@ def add_post():
 
     return render_template('add_edit_post.html', form_title='Nieuw Bericht', post=None)
 
-
 @app.route('/author/edit/<int:post_id>', methods=['GET', 'POST'])
 @role_required('admin', 'author')
 def edit_post(post_id):
     ''' Edit existing post in database '''
-    conn = sqlite3.connect('database/posts.db')
-    conn.row_factory = sqlite3.Row
-    post = conn.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM posts WHERE id = %s', (post_id,))
+    post = cur.fetchone()
 
     if request.method == 'POST':
         title = request.form['title']
@@ -299,17 +472,14 @@ def edit_post(post_id):
         date = request.form['date']
 
         image_file = request.files.get('image')
-        filename = post['image_filename']  # Default to the old one
+        filename = post['image_filename'] if post else None
 
         if image_file and image_file.filename != '':
             if allowed_file(image_file.filename):
-                # Delete the old image file
-                if post['image_filename']:
+                if post and post['image_filename']:
                     old_path = os.path.join(app.config['UPLOAD_FOLDER'], post['image_filename'])
                     if os.path.exists(old_path):
                         os.remove(old_path)
-
-                # Save new image
                 filename = secure_filename(image_file.filename)
                 image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 image_file.save(image_path)
@@ -317,33 +487,36 @@ def edit_post(post_id):
                 flash('Alleen afbeeldingen zijn toegestaan (jpg, jpeg, png, gif)', 'danger')
                 return redirect(request.url)
 
-        # Update the database
-        conn.execute('UPDATE posts SET title=?, content=?, category=?, date=?, image_filename=? WHERE id=?',
-                     (title, content, category, date, filename, post_id))
+        cur.execute('UPDATE posts SET title=%s, content=%s, category=%s, date=%s, image_filename=%s WHERE id=%s',
+                    (title, content, category, date, filename, post_id))
         conn.commit()
+        cur.close()
         conn.close()
 
         flash('Bericht bijgewerkt!', 'success')
         return redirect(url_for('author'))
 
+    cur.close()
+    conn.close()
     return render_template('add_edit_post.html', form_title='Bewerk Bericht', post=post)
-
 
 @app.route('/author/delete/<int:post_id>')
 @role_required('admin', 'author')
 def delete_post(post_id):
     ''' Delete post from database '''
-    conn = sqlite3.connect('database/posts.db')
-    conn.row_factory = sqlite3.Row
-    post = conn.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM posts WHERE id = %s', (post_id,))
+    post = cur.fetchone()
 
     if post and post['image_filename']:
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], post['image_filename'])
         if os.path.exists(image_path):
-            os.remove(image_path)  # delete the image file
+            os.remove(image_path)
 
-    conn.execute('DELETE FROM posts WHERE id = ?', (post_id,))
+    cur.execute('DELETE FROM posts WHERE id = %s', (post_id,))
     conn.commit()
+    cur.close()
     conn.close()
 
     flash('Bericht en afbeelding verwijderd!', 'info')
@@ -356,21 +529,12 @@ def delete_post(post_id):
 
 @app.route("/contact-form-submit", methods=["POST"])
 def contact_submit_form():
-    ''' Handle contact form submission '''
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
     email = request.form.get("email")
     message = request.form.get("message")
 
-    subject = "Website Raak-Leerbeek: nieuw contactformulier"
-    body = f"""
-    Je hebt een nieuwe vraag of opmerking:
-    
-    Name: {firstname} {lastname}
-    Email: {email}
-    Message:
-    {message}
-    """
+    subject, body = get_contact_mail_content(firstname, lastname, email, message)
 
     success, error = send_admin_email(subject, body, reply_to=email)
     if success:
@@ -384,7 +548,6 @@ def contact_submit_form():
 
 @app.route("/membership-form-submit", methods=["POST"])
 def membership_submit_form():
-    ''' Handle membership form submission '''
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
     email = request.form.get("email")
@@ -396,21 +559,9 @@ def membership_submit_form():
     membership_type = request.form.get("membership_type")
     message = request.form.get("message")
 
-    subject = "Website Raak-Leerbeek: nieuw lidmaatschap"
-    body = f"""
-    Nieuwe lidmaatschapsaanvraag:
-
-    Naam: {firstname} {lastname}
-    Email: {email}
-    Telefoonnummer: {phone}
-    GSM-nummer: {gsm}
-    Straat + huisnummer: {street}
-    Stad/gemeente: {city}
-    Postcode: {zip_code}
-    Type lidmaatschap: {membership_type}
-    Bericht:
-    {message}
-    """
+    subject, body = get_membership_mail_content(
+        firstname, lastname, email, phone, gsm, street, city, zip_code, membership_type, message
+    )
 
     success, error = send_admin_email(subject, body, reply_to=email)
     if success:
@@ -421,9 +572,10 @@ def membership_submit_form():
 
     return redirect(url_for("membership"))
 
-# ════════════════════════════════════════════════
-# ▶ MAIN ENTRY POINT
-# ════════════════════════════════════════════════
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png', 'gif'}
+
 
 # ════════════════════════════════════════════════
 # ▶ MAIN ENTRY POINT

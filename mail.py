@@ -92,3 +92,33 @@ Het Raak Leerbeek-Kester team
         return
 
     send_simple_email(to_email, subject, body)
+
+def get_contact_mail_content(firstname, lastname, email, message):
+    subject = "Website Raak-Leerbeek: nieuw contactformulier"
+    body = f"""
+Je hebt een nieuwe vraag of opmerking:
+
+Name: {firstname} {lastname}
+Email: {email}
+Message:
+{message}
+"""
+    return subject, body
+
+def get_membership_mail_content(firstname, lastname, email, phone, gsm, street, city, zip_code, membership_type, message):
+    subject = "Website Raak-Leerbeek: nieuw lidmaatschap"
+    body = f"""
+Nieuwe lidmaatschapsaanvraag:
+
+Naam: {firstname} {lastname}
+Email: {email}
+Telefoonnummer: {phone}
+GSM-nummer: {gsm}
+Straat + huisnummer: {street}
+Stad/gemeente: {city}
+Postcode: {zip_code}
+Type lidmaatschap: {membership_type}
+Bericht:
+{message}
+"""
+    return subject, body

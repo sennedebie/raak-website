@@ -17,8 +17,11 @@ try:
     cur = conn.cursor()
     cur.execute("SELECT 1;")
     print("Database connection successful!")
+    print("Database URL:", DATABASE_URL)
     cur.close()
     conn.close()
 except Exception as e:
     print("Database connection failed:")
     print(e)
+
+    
