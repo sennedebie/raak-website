@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 # ▶ INITIATE FLASK APP
 # ════════════════════════════════════════════════
 
-load_dotenv() # Load environment variables from .env file
+# load_dotenv() # Load environment variables from .env file (for development deployment only)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev")  # Use your .env secret
@@ -578,9 +578,8 @@ def allowed_file(filename):
 
 # ════════════════════════════════════════════════
 # ▶ MAIN ENTRY POINT
-# ════════════════════════════════════════════════
+# ════════════════════════════════════════════════©
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
 
-    

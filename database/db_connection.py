@@ -4,7 +4,7 @@
 
 import os
 import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg2.extras
 
 
 # ════════════════════════════════════════════════
@@ -12,5 +12,8 @@ from psycopg2.extras import RealDictCursor
 # ════════════════════════════════════════════════
 
 def get_db_connection():
-    db_url = os.getenv("DATABASE_URL")
-    return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+    conn = psycopg2.connect(
+        os.environ["DATABASE_URL"],  # Will use Railway's environment variable
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
+    return conn
