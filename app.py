@@ -199,7 +199,13 @@ def index():
     '''
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM posts WHERE is_pinned = %s ORDER BY created_at DESC', (True,))
+    cur.execute("""
+    SELECT p.*, pi.url AS image_url
+    FROM posts p
+    LEFT JOIN post_images pi ON p.id = pi.post_id
+    WHERE is_pinned = %s and is_main = %s
+    ORDER BY p.created_at DESC
+    LIMIT 1""", (True, True))
     posts = cur.fetchall()
     cur.close()
     conn.close()
@@ -581,5 +587,5 @@ def allowed_file(filename):
 # ════════════════════════════════════════════════©
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
-
+    # app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=True) # For development deploy only
