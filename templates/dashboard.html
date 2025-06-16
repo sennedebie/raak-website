@@ -1,0 +1,29 @@
+{% extends "base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/dashboard.css') }}"
+/>
+{% endblock %} {% block title %}Dashboard{% endblock %} {% block content %}
+
+<section class="section1">
+  <div class="dashboard-header">
+    <h1 class="greeting">Welkom {{ current_user.first_name }}</h1>
+    <div class="roles-list">
+      {% for role in current_user.roles %}
+      <span class="role-badge">{{ role }}</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="panel1">Profiel</div>
+    <div class="panel1">Gebruikerssysteem</div>
+    <div class="panel1">Rollen en rechten</div>
+    <div class="panel1">Statische content</div>
+
+    <div class="panel2">Evenementen</div>
+
+    <div class="panel3">Agenda</div>
+  </div>
+</section>
+{% endblock %}

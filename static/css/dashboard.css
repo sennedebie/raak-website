@@ -1,0 +1,146 @@
+/* ════════════════════════════════════════════════ */
+/* ▶ SECTION STYLING                                */
+/* ════════════════════════════════════════════════ */
+
+section {
+    min-height: 100vh;
+    width: 100%;
+    background: none;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+    font: inherit;
+    color: inherit;
+    display: block;
+}
+
+.section-divider {
+    border: none;
+    height: 1px;
+    background: #007bff;
+    width: 100%;
+}
+
+body {
+    background-color: #F5F7FB;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    margin-top: 5rem;
+    justify-content: center;
+}
+
+.greeting {
+    color: #007bff;
+    margin: 0;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+}
+
+.roles-list {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.role-badge {
+    border: 1px solid #007bff;
+    background: #e6f0ff;
+    color: #007bff;
+    border-radius: 8px;
+    padding: 0.2em 0.8em;
+    font-size: 1rem;
+    font-weight: 500;
+    display: inline-block;
+    text-transform: capitalize;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+    width: auto;
+    margin-left: 5vw;
+    margin-right: 5vw;
+}
+
+.panel1,
+.panel2,
+.panel3 {
+    background-color: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    justify-self: center;
+    align-self: center;
+    margin-bottom: 30px;
+}
+
+.panel1 {
+  min-height: 20vh;
+
+}
+
+.panel2 {
+    grid-column: 1 / span 2;
+}
+
+
+.panel3 {
+    grid-column: 1 / span 2;
+}
+/* ════════════════════════════════════════════════ */
+/* ▶ LOGIN CONTAINER                               */
+/* ════════════════════════════════════════════════ */
+
+.login-container {
+    background-color: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    width: 50vw;
+    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 50px;
+    border-radius: 30px;
+    text-align: center;
+}
+
+.label1 {
+    display: block;
+    text-align: left;
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: grey;
+    margin-bottom: 5px;
+}
+
+input {
+    display: block;
+    margin-top: 16px;
+    padding: clamp(10px, 2vw, 12px);
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    box-sizing: border-box;
+    font-size: clamp(1rem, 2vw, 1rem);
+    color: #0051a4;
+    font-weight: 500;
+    width: 70%;
+}
+
+input:focus {
+    border-color: #0051a4;
+    outline: none;
+}
+

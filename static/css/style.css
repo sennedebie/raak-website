@@ -58,7 +58,7 @@ header {
 
 .nav-buttons a {
     text-decoration: none;
-    color: #0051a4;
+    color: white;
     font-weight: bold;
     transition: color 0.3s ease;
 }

@@ -264,6 +264,12 @@ def about_us():
 def contact():
     ''' Contact page '''
     return render_template("contact.html")
+
+
+@app.route("/dashboard", endpoint="dashboard")
+def dashboard():
+    ''' User dashboard '''
+    return render_template("dashboard.html")
 # ════════════════════════════════════════════════
 # ▶ SPECIAL ROUTES: REGISTER & LOGIN
 # ════════════════════════════════════════════════
