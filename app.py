@@ -587,5 +587,9 @@ def allowed_file(filename):
 # ════════════════════════════════════════════════©
 
 if __name__ == '__main__':
-    # app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
-    app.run(debug=True) # For development deploy only
+
+    # For production deploy only
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+
+    # For development deploy only
+    # app.run(debug=True) 
