@@ -19,7 +19,7 @@ section {
 .section-divider {
     border: none;
     height: 1px;
-    background: #007bff;
+    /* background: #0051a4; */
     width: 100%;
 }
 
@@ -36,8 +36,9 @@ body {
     justify-content: center;
 }
 
+
 .greeting {
-    color: #007bff;
+    color: #ee3a37;
     margin: 0;
     font-size: 2rem;
     font-weight: bold;
@@ -51,9 +52,9 @@ body {
 }
 
 .role-badge {
-    border: 1px solid #007bff;
-    background: #e6f0ff;
-    color: #007bff;
+    border: 1px solid #ee3a37;
+    background: #ee3a372f;
+    color: #ee3a37;
     border-radius: 8px;
     padding: 0.2em 0.8em;
     font-size: 1rem;
@@ -66,15 +67,28 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
-    gap: 16px;
+    gap: 35px;
     width: auto;
-    margin-left: 5vw;
-    margin-right: 5vw;
+    margin-left: 6vw;
+    margin-right: 6vw;
 }
 
-.panel1,
-.panel2,
-.panel3 {
+.panel-title {
+    font-weight: 500;
+    margin-bottom: 20px;
+    color: rgba(0, 0, 0, 0.9);
+}
+
+.panel1 ul li {
+    text-align: left;
+    margin-left: 30px;
+    line-height: 30px;
+    font-weight: 300;
+    color: rgba(0, 0, 0, 0.8);
+}
+
+.panel1 
+{
     background-color: white;
     padding: 20px;
     border-radius: 20px;
@@ -83,64 +97,6 @@ body {
     box-sizing: border-box;
     min-width: 0;
     justify-self: center;
-    align-self: center;
-    margin-bottom: 30px;
-}
-
-.panel1 {
-  min-height: 20vh;
+    min-height: 20vh;
 
 }
-
-.panel2 {
-    grid-column: 1 / span 2;
-}
-
-
-.panel3 {
-    grid-column: 1 / span 2;
-}
-/* ════════════════════════════════════════════════ */
-/* ▶ LOGIN CONTAINER                               */
-/* ════════════════════════════════════════════════ */
-
-.login-container {
-    background-color: #f4f4f4;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 50vh;
-    width: 50vw;
-    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 50px;
-    border-radius: 30px;
-    text-align: center;
-}
-
-.label1 {
-    display: block;
-    text-align: left;
-    font-size: clamp(1rem, 2vw, 1.25rem);
-    color: grey;
-    margin-bottom: 5px;
-}
-
-input {
-    display: block;
-    margin-top: 16px;
-    padding: clamp(10px, 2vw, 12px);
-    border: 1px solid #ccc;
-    border-radius: 16px;
-    box-sizing: border-box;
-    font-size: clamp(1rem, 2vw, 1rem);
-    color: #0051a4;
-    font-weight: 500;
-    width: 70%;
-}
-
-input:focus {
-    border-color: #0051a4;
-    outline: none;
-}
-

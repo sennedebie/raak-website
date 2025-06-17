@@ -4,6 +4,15 @@
 
 import os
 import psycopg2
+from dotenv import load_dotenv
+
+
+# ════════════════════════════════════════════════
+# ▶ LOAD .env VARIABLES
+# ════════════════════════════════════════════════
+
+# Loads variables from .env into environment
+load_dotenv()  
 
 
 # ════════════════════════════════════════════════
@@ -24,4 +33,3 @@ except Exception as e:
     print("Database connection failed:")
     print(e)
 
-    

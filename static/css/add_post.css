@@ -1,0 +1,91 @@
+/* ════════════════════════════════════════════════ */
+/* ▶ SECTION STYLING                                */
+/* ════════════════════════════════════════════════ */
+
+section {
+    min-height: 100vh;
+    width: 100%;
+    background: none;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+    font: inherit;
+    color: inherit;
+    display: block;
+}
+
+body {
+    background-color: #F5F7FB;
+}
+
+.page-title {
+    color: #ee3a37;   
+    margin-top: 50px;
+    margin-bottom: 35px;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+}
+
+/* ════════════════════════════════════════════════ */
+/* ▶ FORM                                           */
+/* ════════════════════════════════════════════════ */
+
+.form {
+  width: 80vw;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+label {
+    display: block;
+    text-align: left;
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: grey;
+    margin-bottom: 5px;
+}
+
+input[type=text], select, textarea {
+    display: block;
+    width: 100%;
+    padding: clamp(10px, 2vw, 12px);
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    box-sizing: border-box;
+    margin-top: clamp(5px, 1vw, 6px);
+    margin-bottom: clamp(20px, 3vw, 40px);
+    resize: vertical;
+    font-size: clamp(1rem, 2vw, 1rem);
+    color: #0051a4;
+    font-weight: 500;
+}
+
+input:focus, textarea:focus {
+    border-color: #0051a4;
+    outline: none;
+}
+
+textarea {
+    min-height: 400px;
+}
+
+.required-field {
+    color: #ee3a37;
+}
+
+.tag-checkboxes {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.tag-checkboxes label {
+  font-size: 1rem;
+  color: #0051a4;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}

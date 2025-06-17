@@ -1,0 +1,41 @@
+{% extends "base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/add_post.css') }}"
+/>
+{% endblock %} {% block title %}Nieuwsbericht toevoegen{% endblock %} {% block
+content %}
+
+<p class="page-title">Nieuwbericht toevoegen</p>
+
+<div class="form">
+  <form method="post" enctype="multipart/form-data">
+    <label for="title">Titel</label>
+    <input
+      type="text"
+      id="title"
+      name="title"
+      value="{{ post.title if post else '' }}"
+      required
+    />
+
+    <label for="content">Inhoud</label>
+    <textarea id="content" name="content" required>
+{{ post.content if post else '' }}</textarea
+    >
+
+    <label>Tags</label>
+    <div class="tag-checkboxes">
+      <label><input type="checkbox" name="tag[]" value="sport" /> Nieuws</label>
+      <label
+        ><input type="checkbox" name="tag[]" value="koken" /> Evenement</label
+      >
+      <!-- Voeg meer opties toe indien gewenst -->
+    </div>
+
+    <label for="image">Afbeelding (optioneel)</label>
+    <input type="file" id="image" name="image" accept="image/*" />
+    <button type="submit">Opslaan</button>
+  </form>
+</div>
+{% endblock %}

@@ -17,7 +17,8 @@ from dotenv import load_dotenv
 # ▶ INITIATE FLASK APP
 # ════════════════════════════════════════════════
 
-# load_dotenv() # Load environment variables from .env file (for development deployment only)
+# Load environment variables from .env file (for development deployment only)
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev")  # Use your .env secret
@@ -203,7 +204,7 @@ def index():
     SELECT p.*, pi.url AS image_url
     FROM posts p
     LEFT JOIN post_images pi ON p.id = pi.post_id
-    WHERE is_pinned = %s and is_main = %s
+    WHERE p.is_pinned = %s and pi.is_main = %s
     ORDER BY p.created_at DESC
     LIMIT 1""", (True, True))
     posts = cur.fetchall()
@@ -426,10 +427,10 @@ def author():
 
 
 # To be changed
-@app.route('/author/add', methods=['GET', 'POST'])
-@role_required('admin', 'author')
+@app.route('/redactie/nieuwsbericht-toevoegen', methods=['GET', 'POST'])
 def add_post():
     ''' Add news post to database '''
+
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
@@ -459,10 +460,11 @@ def add_post():
         flash('Bericht toegevoegd!', 'success')
         return redirect(url_for('author'))
 
-    return render_template('add_edit_post.html', form_title='Nieuw Bericht', post=None)
+    return render_template('add_post.html', form_title='Nieuw Bericht', post=None)
+
+
 
 @app.route('/author/edit/<int:post_id>', methods=['GET', 'POST'])
-@role_required('admin', 'author')
 def edit_post(post_id):
     ''' Edit existing post in database '''
     conn = get_db_connection()

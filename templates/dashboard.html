@@ -7,7 +7,7 @@
 
 <section class="section1">
   <div class="dashboard-header">
-    <h1 class="greeting">Welkom {{ current_user.first_name }}</h1>
+    <h2 class="greeting">Welkom {{ current_user.first_name }}</h2>
     <div class="roles-list">
       {% for role in current_user.roles %}
       <span class="role-badge">{{ role }}</span>
@@ -16,14 +16,50 @@
   </div>
 
   <div class="dashboard-grid">
-    <div class="panel1">Profiel</div>
-    <div class="panel1">Gebruikerssysteem</div>
-    <div class="panel1">Rollen en rechten</div>
-    <div class="panel1">Statische content</div>
+    <div class="panel1">
+      <p class="panel-title">Profiel</p>
+      <ul>
+        <li>Persoonsgegevens bewerken</li>
+        <li>Wachtwoord wijzigen</li>
+      </ul>
+    </div>
 
-    <div class="panel2">Evenementen</div>
+    <div class="panel1">
+      <p class="panel-title">Gebruikerssysteem</p>
+      <ul>
+        <li>Gebruikers beheren</li>
+        <li>Rollen beheren</li>
+        <li>Rechten beheren</li>
+      </ul>
+    </div>
 
-    <div class="panel3">Agenda</div>
-  </div>
+    <div class="panel1">
+      <p class="panel-title">Mailing</p>
+      <ul>
+        <li>SMTP server instellingen</li>
+        <li>Contactformulieren</li>
+      </ul>
+    </div>
+
+    <div class="panel1">
+      <p class="panel-title">Redactie</p>
+      <ul>
+        <li>Nieuwsbericht toevoegen</li>
+        <li>Nieuwsberichten beheren</li>
+        <li>Webinhoud beheren</li>
+        <li>Tags beheren</li>
+
+
+      </ul>
+    </div>
+
+    <div class="panel1">
+      <p class="panel-title">Organisatie</p>
+      <ul>
+        <li>Evenement toevoegen</li>
+        <li>Evenementen beheren</li>
+      </ul>
+    </div>
+
 </section>
 {% endblock %}
