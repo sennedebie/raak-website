@@ -1,7 +1,7 @@
-{% extends "base.html" %} {% block extra_css %}
+{% extends "admin/base.html" %} {% block extra_css %}
 <link
   rel="stylesheet"
-  href="{{ url_for('static', filename='css/dashboard.css') }}"
+  href="{{ url_for('static', filename='css/admin/dashboard.css') }}"
 />
 {% endblock %} {% block title %}Dashboard{% endblock %} {% block content %}
 
@@ -14,7 +14,7 @@
       {% endfor %}
     </div>
   </div>
-
+<p>Authenticated: {{ current_user.is_authenticated }}</p>
   <div class="dashboard-grid">
     <div class="panel1">
       <p class="panel-title">Profiel</p>

@@ -2,33 +2,42 @@
 # ▶ IMPORTS
 # ════════════════════════════════════════════════
 import os
+import re
+import random
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from database.db_connection import get_db_connection
-from mail import (send_admin_email, send_confirmation_email, get_contact_mail_content, get_membership_mail_content)
+from mail import *
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 
+
+
+# ════════════════════════════════════════════════
+# ▶ LOAD VARIABLES
+# ════════════════════════════════════════════════
+
+# Load environment variables from .env file (for development deployment only)
+load_dotenv()
 
 
 # ════════════════════════════════════════════════
 # ▶ INITIATE FLASK APP
 # ════════════════════════════════════════════════
 
-# Load environment variables from .env file (for development deployment only)
-load_dotenv()
-
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "dev")  # Use your .env secret
+app.secret_key = os.getenv("SECRET_KEY")  # Use your .env secret
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-
+login_manager.login_message = "Log in om deze pagina te bekijken."
+login_manager.login_message_category = "warning"
 
 # ════════════════════════════════════════════════
 # ▶ USER MODEL
@@ -68,8 +77,8 @@ class User(UserMixin):
         try:
             cur = conn.cursor()
 
-            # Fetch user record form database
-            cur.execute("SELECT id, username, first_name, last_name, is_active FROM users WHERE id = %s", (user_id,))
+            # Fetch user record form database, including require_password_change
+            cur.execute("SELECT id, username, first_name, last_name, is_active, require_password_change FROM users WHERE id = %s", (user_id,))
             user = cur.fetchone()
             if not user:
                 return None
@@ -95,8 +104,10 @@ class User(UserMixin):
             cur.close()
             conn.close()
 
-        # Return user object
-        return User(user["id"], user["username"], user["first_name"], user["last_name"], roles, permissions, user["is_active"])
+        # Return user object, attach require_password_change as attribute
+        user_obj = User(user["id"], user["username"], user["first_name"], user["last_name"], roles, permissions, user["is_active"])
+        user_obj.require_password_change = user.get("require_password_change", False)
+        return user_obj
     
 
 
@@ -188,10 +199,10 @@ def permission_required(*permissions):
 
 
 # ════════════════════════════════════════════════
-# ▶ GENERAL ROUTES
+# ▶ INDEX PAGE
 # ════════════════════════════════════════════════
 
-@app.route("/")
+@app.route("/", endpoint="index")
 def index():
     ''' 
     Home page.
@@ -210,8 +221,12 @@ def index():
     posts = cur.fetchall()
     cur.close()
     conn.close()
-    return render_template('index.html', posts=posts)
+    return render_template('public/index.html', posts=posts)
 
+
+# ════════════════════════════════════════════════
+# ▶ NEWS PAGE
+# ════════════════════════════════════════════════
 
 @app.route("/nieuws", endpoint="news")
 def news():
@@ -226,22 +241,32 @@ def news():
     posts = cur.fetchall()
     cur.close()
     conn.close()
-    return render_template('news.html', posts=posts)
+    return render_template('public/news.html', posts=posts)
 
 
+# ════════════════════════════════════════════════
+# ▶ AGENDA PAGE
+# ════════════════════════════════════════════════
 
 @app.route("/agenda", endpoint="agenda")
 def agenda():
     ''' Agenda page '''
-    return render_template("agenda.html")
+    return render_template("public/agenda.html")
 
 
+# ════════════════════════════════════════════════
+# ▶ MEMBERSHIP PAGE
+# ════════════════════════════════════════════════
 
 @app.route("/lid-worden", endpoint="membership")
 def membership():
     ''' Membership page '''
-    return render_template("membership.html")
+    return render_template("public/membership.html")
 
+
+# ════════════════════════════════════════════════
+# ▶ ABOUT US PAGE
+# ════════════════════════════════════════════════
 
 @app.route("/over-ons", endpoint="about")
 def about_us():
@@ -264,93 +289,22 @@ def about_us():
     board_members = cur.fetchall()
     cur.close()
     conn.close()
-    return render_template("about_us.html", board_members=board_members)
+    return render_template("public/about_us.html", board_members=board_members)
 
+
+# ════════════════════════════════════════════════
+# ▶ CONTACT PAGE
+# ════════════════════════════════════════════════
 
 @app.route("/contact", endpoint="contact")
 def contact():
     ''' Contact page '''
-    return render_template("contact.html")
+    return render_template("public/contact.html")
 
 
-@app.route("/dashboard", endpoint="dashboard")
-def dashboard():
-    ''' User dashboard '''
-    return render_template("dashboard.html")
 # ════════════════════════════════════════════════
-# ▶ SPECIAL ROUTES: REGISTER & LOGIN
+# ▶ LOGIN
 # ════════════════════════════════════════════════
-
-@app.route("/register", methods=["GET", "POST"], endpoint="register")
-def register():
-    ''' Add new user to database. '''
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    # Exclude 'super' from the roles list
-    cur.execute("SELECT name FROM roles WHERE name != %s", ('super',))
-    roles = [row["name"] for row in cur.fetchall()]
-
-    try:
-        if request.method == "POST":
-            username = request.form.get("username", "").strip()
-            password = request.form.get("password", "")
-            email = request.form.get("email")
-            is_active = request.form.get("is_active", True)
-            selected_roles = request.form.getlist("role")
-
-            # Ensure username and password are not empty
-            if not username or not password:
-                flash("Gebruikersnaam en wachtwoord zijn vereist.")
-                return render_template("register.html", roles=roles)
-
-            # Ensure at least one role is selected
-            if not selected_roles:
-                flash("Minstens één rol is vereist.")
-                return render_template("register.html", roles=roles)
-
-            # Check if username already exists
-            cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-            if cur.fetchone():
-                flash("Deze gebruikersnaam bestaat al. Kies een andere gebruikersnaam.", "warning")
-                return render_template("register.html", roles=roles)
-
-            # Hash password before storing in database
-            password_hash = generate_password_hash(password, method="pbkdf2:sha256")
-
-            # Insert new user into users table and return id
-            cur.execute(
-                "INSERT INTO users (username, password_hash, email, is_active) VALUES (%s, %s, %s, %s) RETURNING id",
-                (username, password_hash, email, is_active)
-            )
-            user_id = cur.fetchone()["id"]
-
-            # Insert into user_role_map for each selected role
-            for role in selected_roles:
-                cur.execute("SELECT id FROM roles WHERE name = %s", (role,))
-                role_row = cur.fetchone()
-                if not role_row:
-                    raise Exception(f"Role '{role}' not found.")
-                role_id = role_row["id"]
-                cur.execute(
-                    "INSERT INTO user_role_map (user_id, role_id) VALUES (%s, %s)",
-                    (user_id, role_id)
-                )
-            conn.commit()
-            flash("Registratie gelukt. Je kan nu inloggen!")
-            return redirect("/login")
-
-    except Exception as e:
-        conn.rollback()
-        flash(f"Er is een fout opgetreden: {e}", "warning")
-        return render_template("register.html", roles=roles)
-    
-    finally:
-        cur.close()
-        conn.close()
-
-    return render_template("register.html", roles=roles)
-
 
 @app.route("/login", methods=["GET", "POST"], endpoint="login")
 def login():
@@ -362,41 +316,90 @@ def login():
 
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT id, username, password_hash FROM users WHERE username = %s", (username,))
+        cur.execute("SELECT id, username, password_hash, is_active, require_password_change  FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
         cur.close()
         conn.close()
 
         # Check if user exists in database
         if not user:
-            flash("Ongeldige logingegevens.")
-            return redirect("/login")
-
+            flash("Ongeldige logingegevens.", "danger")
+            return redirect(url_for("login"))
         # Check provided password against hash stored in database
         if user and check_password_hash(user["password_hash"], password):
 
+            if not user["is_active"]:
+                flash("Gebruiker is niet actief.", "danger")
+                return redirect(url_for("login"))
             # Use User.get to fetch roles and permissions
             user_obj = User.get(user["id"])
+
             if user_obj is None:
-                flash("Gebruiker niet gevonden of niet actief.", "warning")
-                return redirect("/login")
+                flash("Gebruiker niet gevonden.", "warning")
+                return redirect(url_for("login"))
+
+            if user["require_password_change"]:
+                login_user(user_obj)
+                return redirect(url_for("set_password"))
+            
             login_user(user_obj)
-            flash(f"Welkom {user_obj.first_name} {user_obj.last_name}")
-            next_page = request.args.get("next")
+            return redirect(url_for("dashboard"))
 
-            # Redirect based on role
-            if any(r in ("super", "admin", "auteur", "redacteur") for r in user_obj.roles):
-                return redirect(next_page or url_for("index"))
-            else:
-                flash("Je hebt geen toegang.", "warning")
-                flash(user_obj.roles)
-                return redirect(next_page or url_for("index"))
         else:
-            flash("Ongeldige logingegevens.")
-            return redirect("/login")
+            flash("Ongeldige logingegevens.", "danger")
+            return redirect(url_for("login"))
 
-    return render_template("login.html")
+    return render_template("public/login.html")
 
+# ════════════════════════════════════════════════
+# ▶ SET PASSWORD (UPON FIRST LOGIN)
+# ════════════════════════════════════════════════
+
+@app.route("/wachtwoord-instellen", methods=["GET", "POST"], endpoint="set_password")
+def set_password():
+    ''' Set password upon first login '''
+    if not current_user.is_authenticated:
+        flash("Je moet ingelogd zijn om je wachtwoord in te stellen.", "warning")
+        return redirect(url_for("login"))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT username FROM users WHERE id = %s", (current_user.id,))
+    user_row = cur.fetchone()
+    cur.close()
+    conn.close()
+    username = user_row["username"] if user_row else ""
+
+    if request.method == "POST":
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+
+        if not password or not confirm_password:
+            flash("Vul beide wachtwoordvelden in.", "danger")
+            return render_template("admin/set_password.html", username=username)
+
+        if password != confirm_password:
+            flash("Wachtwoorden komen niet overeen.", "danger")
+            return render_template("admin/set_password.html", username=username)
+
+        password_hash = generate_password_hash(password, method="pbkdf2:sha256")
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE users SET password_hash = %s, require_password_change = %s WHERE id = %s",
+            (password_hash, False, current_user.id)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Wachtwoord succesvol ingesteld. Je kunt nu verder.", "success")
+        return redirect(url_for("dashboard"))
+    return render_template("admin/set_password.html", username=username)
+
+
+# ════════════════════════════════════════════════
+# ▶ LOGOUT
+# ════════════════════════════════════════════════
 
 @app.route("/logout", endpoint="logout")
 @login_required
@@ -404,13 +407,149 @@ def logout():
     ''' Logout route for users '''
     logout_user()
     flash("Je bent nu uitgelogd.")
-    return redirect("/login")
+    return render_template("/public/login.html")
+
 
 
 # ════════════════════════════════════════════════
-# ▶ SPECIAL ROUTES: AUTHOR & ADMIN
+# ▶ CONTACT FORM SUBMIT
 # ════════════════════════════════════════════════
 
+@app.route("/contact-form-submit", endpoint="contact-form-submit", methods=["POST"])
+def contact_submit_form():
+    firstname = request.form.get("firstname")
+    lastname = request.form.get("lastname")
+    email = request.form.get("email")
+    message = request.form.get("message")
+
+    subject, body = get_contact_mail_content(firstname, lastname, email, message)
+
+    success, error = send_admin_email(subject, body, reply_to=email)
+    if success:
+        flash("We hebben jouw bericht goed ontvangen en bezorgen je zo snel mogelijk een antwoord.", "success")
+        send_confirmation_email(email, f"{firstname} {lastname}", "contact")
+    else:
+        flash(f"Er is een fout opgetreden!: {error}", "danger")
+
+    return redirect(url_for("contact"))
+
+
+# ════════════════════════════════════════════════
+# ▶ MEMBERSHIP FORM SUBMIT
+# ════════════════════════════════════════════════
+
+@app.route("/membership-form-submit", endpoint="membership-form-submit", methods=["POST"])
+def membership_submit_form():
+    firstname = request.form.get("firstname")
+    lastname = request.form.get("lastname")
+    email = request.form.get("email")
+    phone = request.form.get("phone")
+    gsm = request.form.get("gsm")
+    street = request.form.get("street")
+    city = request.form.get("city")
+    zip_code = request.form.get("zip")
+    membership_type = request.form.get("membership_type")
+    message = request.form.get("message")
+
+    subject, body = get_membership_mail_content(
+        firstname, lastname, email, phone, gsm, street, city, zip_code, membership_type, message
+    )
+
+    success, error = send_admin_email(subject, body, reply_to=email)
+    if success:
+        flash("We hebben je aanvraag goed ontvangen en bezorgen je zo snel mogelijk een antwoord.", "success")
+        send_confirmation_email(email, f"{firstname} {lastname}", "membership")
+    else:
+        flash(f"Er is een fout opgetreden: {error}", "danger")
+
+    return redirect(url_for("membership"))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN DASHBOARD PAGE
+# ════════════════════════════════════════════════
+
+@app.route("/dashboard", endpoint="dashboard")
+def dashboard():
+    ''' User dashboard '''
+    return render_template("admin/dashboard.html")
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ADD NEW USER
+# ════════════════════════════════════════════════
+
+@app.route("/nieuwe-gebruiker", methods=["GET", "POST"], endpoint="add_user")
+def add_user():
+    ''' Add new user to database. '''
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Exclude 'super' from the roles list
+    cur.execute("SELECT id, name FROM roles WHERE name != %s", ('super',))
+    roles = cur.fetchall()
+
+    try:
+        if request.method == "POST":
+            first_name = request.form.get("firstname", "").strip()
+            last_name = request.form.get("lastname", "").strip()
+            username = generate_username(first_name, last_name) # Use function to generate username based on first and last name
+            token = str(random.randint(10000, 99999)) # Generate random 5-digit password
+            email = request.form.get("email")
+            is_active = True
+            require_password_change = True
+            # Fetch current user from session (if logged in), else set to None
+            created_by = current_user.id if current_user.is_authenticated else None
+            updated_by = current_user.id if current_user.is_authenticated else None
+            created_at = datetime.now(timezone.utc)
+            updated_at = datetime.now(timezone.utc)
+            selected_role_id = request.form.get("role").lower()
+
+            # Ensure username and password are not empty
+            if not first_name or not last_name or not email:
+                flash("Voornaam, achternaam en e-mail zijn vereist.")
+                return render_template("admin/add_user.html", roles=roles)
+
+            # Hash password before storing in database
+            password_hash = generate_password_hash(token, method="pbkdf2:sha256")
+            # Insert new user into users table and return id
+            cur.execute(
+                "INSERT INTO users (username, password_hash, email, is_active, first_name, last_name, require_password_change, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                (username, password_hash, email, is_active, first_name, last_name, require_password_change, created_by, updated_by, created_at, updated_at)
+            )
+            user_row = cur.fetchone()
+            if not user_row or "id" not in user_row:
+                raise Exception("Niet mogelijk om gebruiker te registeren of id op te halen.")
+            user_id = user_row["id"]
+
+            # Insert into user_role_map for each selected role
+            cur.execute("SELECT id FROM roles WHERE id = %s", (selected_role_id,))
+            role_row = cur.fetchone()
+            if not role_row:
+                raise Exception(f"Rol met id '{selected_role_id}' niet gevonden.")
+            role_id = role_row["id"]
+            cur.execute(
+                "INSERT INTO user_role_map (user_id, role_id) VALUES (%s, %s)",
+                (user_id, role_id)
+            )
+            conn.commit()
+            send_login_credentials_email(email, first_name, username, token)
+            flash(f"Registratie gelukt. Controleer e-mail met logingegevens. {username} {token}")
+            return redirect("/dashboard")
+        return render_template("admin/add_user.html", roles=roles)
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "danger")
+    finally:
+        cur.close()
+
+
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: MANAGE NEWS POSTS
+# ════════════════════════════════════════════════
 
 # To be delete -> Centralized dashboard for all special users
 @app.route('/author', endpoint="author")
@@ -425,6 +564,10 @@ def author():
     conn.close()
     return render_template('author.html', posts=posts)
 
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ADD NEWS POST
+# ════════════════════════════════════════════════
 
 # To be changed
 @app.route('/redactie/nieuwsbericht-toevoegen', methods=['GET', 'POST'])
@@ -463,6 +606,9 @@ def add_post():
     return render_template('add_post.html', form_title='Nieuw Bericht', post=None)
 
 
+# ════════════════════════════════════════════════
+# ▶ ADMIN: EDIT NEWS POST
+# ════════════════════════════════════════════════
 
 @app.route('/author/edit/<int:post_id>', methods=['GET', 'POST'])
 def edit_post(post_id):
@@ -507,6 +653,11 @@ def edit_post(post_id):
     conn.close()
     return render_template('add_edit_post.html', form_title='Bewerk Bericht', post=post)
 
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: DELETE NEWS POST
+# ════════════════════════════════════════════════
+
 @app.route('/author/delete/<int:post_id>')
 @role_required('admin', 'author')
 def delete_post(post_id):
@@ -530,58 +681,42 @@ def delete_post(post_id):
     return redirect(url_for('author'))
 
 
+
+
 # ════════════════════════════════════════════════
-# ▶ FORM HANDLERS
+# ▶ FUNCTIONS
 # ════════════════════════════════════════════════
-
-@app.route("/contact-form-submit", methods=["POST"])
-def contact_submit_form():
-    firstname = request.form.get("firstname")
-    lastname = request.form.get("lastname")
-    email = request.form.get("email")
-    message = request.form.get("message")
-
-    subject, body = get_contact_mail_content(firstname, lastname, email, message)
-
-    success, error = send_admin_email(subject, body, reply_to=email)
-    if success:
-        flash("We hebben jouw bericht goed ontvangen en bezorgen je zo snel mogelijk een antwoord.", "success")
-        send_confirmation_email(email, f"{firstname} {lastname}", "contact")
-    else:
-        flash(f"Er is een fout opgetreden!: {error}", "danger")
-
-    return redirect(url_for("contact"))
-
-
-@app.route("/membership-form-submit", methods=["POST"])
-def membership_submit_form():
-    firstname = request.form.get("firstname")
-    lastname = request.form.get("lastname")
-    email = request.form.get("email")
-    phone = request.form.get("phone")
-    gsm = request.form.get("gsm")
-    street = request.form.get("street")
-    city = request.form.get("city")
-    zip_code = request.form.get("zip")
-    membership_type = request.form.get("membership_type")
-    message = request.form.get("message")
-
-    subject, body = get_membership_mail_content(
-        firstname, lastname, email, phone, gsm, street, city, zip_code, membership_type, message
-    )
-
-    success, error = send_admin_email(subject, body, reply_to=email)
-    if success:
-        flash("We hebben je aanvraag goed ontvangen en bezorgen je zo snel mogelijk een antwoord.", "success")
-        send_confirmation_email(email, f"{firstname} {lastname}", "membership")
-    else:
-        flash(f"Er is een fout opgetreden: {error}", "danger")
-
-    return redirect(url_for("membership"))
-
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png', 'gif'}
+
+
+def get_existing_usernames():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT username FROM users")
+    usernames = {row["username"] for row in cur.fetchall()}
+    cur.close()
+    conn.close()
+    return usernames
+
+
+def generate_username(first_name, last_name):
+    '''
+    Generate username based on first and last name.
+    Append number if user already exists.
+    '''
+    existing_usernames = get_existing_usernames()
+
+    # Remove spaces and special characters from last name
+    clean_last = re.sub(r'[^a-zA-Z0-9]', '', last_name.lower())
+    base = (first_name[0] + clean_last).lower()
+    username = base
+    counter = 2
+    while username in existing_usernames:
+        username = f"{base}{counter}"
+        counter += 1
+    return username
 
 
 # ════════════════════════════════════════════════
@@ -591,7 +726,8 @@ def allowed_file(filename):
 if __name__ == '__main__':
 
     # For production deploy only
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    # app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
 
     # For development deploy only
-    # app.run(debug=True) 
+    app.run(debug=True)
+

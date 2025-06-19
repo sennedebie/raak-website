@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 
 
 # ════════════════════════════════════════════════
-# ▶ MAIL ALIASES
+# ▶ MAIL ALIASES (concept)
 # ════════════════════════════════════════════════
 
 # info@raakleerbeekkester.be -> Algemeen e-mailadres
@@ -22,13 +22,15 @@ from email.mime.multipart import MIMEMultipart
 
 smtp_host = "smtp.gmail.com"
 smtp_port = 587
-smtp_sender_email = "sennedebiechristmas@gmail.com" 
-smtp_sender_password = "eqwr wpjj pndu etei"
-forms_recipient_email = "sennedebie@icloud.com"
+smtp_sender_email = "sennedebiechristmas@gmail.com" # All outgoing mails will be send with this adress
+smtp_sender_password = "fdux pfge gaty hsfw"
+
 
 # ════════════════════════════════════════════════
 # ▶ EMAIL FUNCTIONS
 # ════════════════════════════════════════════════
+
+
 
 def send_admin_email(subject, body, reply_to=None):
     ''' Send email to admin via SMTP server '''
@@ -67,6 +69,27 @@ def send_simple_email(to_email, subject, body):
             server.sendmail(smtp_sender_email, to_email, msg.as_string())
     except Exception:
         pass  # Silently ignore confirmation mail errors
+
+
+def send_login_credentials_email(to_email, first_name, username, token):
+    '''' Send login credentials to newly registered user '''
+    subject = "Welkom bij Raak Leerbeek-Kester!"
+    body = f"""Beste {first_name},
+
+    Er werd voor jou een gebruikersaccount aangemaakt voor de website van Raak Leerbeek-Kester.
+    Met deze logingegevens kan je inloggen via www.raakleerbeekkester.be/login . 
+    Vul de toegangscode in als wachtwoord, bij de eerst log in zal je gevraagd om een wachtwoord in te stellen.
+
+    Gebruikersnaam: {username}
+    Eenmalige toegangscode: {token}
+
+
+    Met vriendelijke groeten,
+    Het Raak Leerbeek-Kester team
+
+"""
+    send_simple_email(to_email, subject, body)
+
 
 def send_confirmation_email(to_email, name, form_type):
     """ Send confirmation mail for form submissions """

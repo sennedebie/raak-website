@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/add_user.css') }}"
+/>
+{% endblock %} {% block title %}Nieuwe gebruiker{% endblock %} {% block content
+%}
+
+<div class="form">
+  <form action="/nieuwe-gebruiker" method="POST">
+    <h1>Nieuwe gebruiker</h1>
+
+    <label class="label1" for="fname"
+      >Voornaam <span class="required-field">*</span></label
+    >
+    <input type="text" id="fname" name="firstname" required />
+    <label class="label1" for="lname"
+      >Achternaam <span class="required-field">*</span></label
+    >
+    <input type="text" id="lname" name="lastname" required />
+    <label class="label1" for="email"
+      >E-mail <span class="required-field">*</span></label
+    >
+    <input type="email" id="email" name="email" required />
+
+    <label class="label1" for="role"
+      >Hoofdrol <span class="required-field">*</span></label
+    >
+    <select id="role" name="role" required>
+      <option value="" disabled selected>Kies een rol</option>
+      {% for role in roles %}
+      <option value="{{ role.id }}">{{ role.name|capitalize }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit" class="normal-button">Aanmaken</button>
+  </form>
+  <p class="form-text">
+    Gebruik dit formulier om een nieuwe gebruiker te registreren. De
+    gebruikersnaam wordt automatisch gegenereerd op basis van de voornaam en
+    achternaam. De betreffende persoon ontvangt een e-mail met de logingegevens
+    en een verzoek om het standaardwachtwoord te wijzigen. Voor de registratie
+    is het verplicht om een hoofdrol te selecteren, extra rollen kunnen later
+    toegewezen worden.
+  </p>
+  <p class="form-text">* Dit is een vereist veld.</p>
+</div>
+{% endblock%}

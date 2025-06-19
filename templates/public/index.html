@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "public/base.html" %}
 
 <!-- ════════════════════════════════════════════════ -->
 <!-- ▶ PAGE SPECIFIC CSS STYLING & TITLE              -->
@@ -7,7 +7,7 @@
 {% block extra_css %}
 <link
   rel="stylesheet"
-  href="{{ url_for('static', filename='css/index.css') }}"
+  href="{{ url_for('static', filename='css/public/index.css') }}"
 />
 {% endblock %} {% block title %}Raak Leerbeek-Kester{% endblock %} {% block
 content %}

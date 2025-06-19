@@ -1,47 +1,73 @@
 === PERMISSIONS LIST ===
 
-Permission Name           | Description
---------------------------|-----------------------------------------------------------
-manage_users              | Create, edit, or deactivate users
-manage_roles              | Create and manage user roles
-manage_permissions        | Create and manage permissions
-assign_roles              | Assign roles to users
-view_audit_logs           | Access system audit logs
-manage_system_settings    | Update global/system settings
-manage_tags               | Create, update, or delete tags
-create_post               | Create a new post
-edit_own_post             | Edit posts created by the user
-edit_any_post             | Edit posts created by any user
-delete_own_post           | Delete posts created by the user
-delete_any_post           | Delete posts created by any user
-approve_post_comment      | Approve or reject comments on posts
-create_event              | Create a new event
-edit_own_event            | Edit events created by the user
-edit_any_event            | Edit events created by any user
-delete_own_event          | Delete events created by the user
-delete_any_event          | Delete events created by any user
-approve_event_comment     | Approve or reject comments on events
+Permission Name             | Description
+----------------------------|-----------------------------------------------------------
+manage_users                | Create, edit, or deactivate users
+manage_roles                | Create and manage user roles
+manage_permissions          | Create and manage permissions
+assign_roles                | Assign roles to users
+view_audit_logs             | Access system audit logs
+manage_system_settings      | Update global/system settings
+manage_tags                 | Create, update, or delete tags
+manage_static_content       | Create, edit, or delete static web content
+create_post                 | Create a new post
+edit_own_post               | Edit posts created by the user
+edit_any_post               | Edit posts created by any user
+delete_own_post             | Delete posts created by the user
+delete_any_post             | Delete posts created by any user
+approve_post_comment        | Approve or reject comments on posts
+publish_unpublish_post      | Publish or unpublish a post
+create_event                | Create a new event
+edit_own_event              | Edit events created by the user
+edit_any_event              | Edit events created by any user
+delete_own_event            | Delete events created by the user
+delete_any_event            | Delete events created by any user
+approve_event_comment       | Approve or reject comments on events
+publish_unpublish_event     | Publish or unpublish an event
 
 === ROLES vs PERMISSIONS CROSS TABLE ===
 
-Permission Name           | Super  | Admin  | Redacteur | Auteur
---------------------------|--------|--------|-----------|--------
-manage_users              |   yes  |  yes   |           |       
-manage_roles              |   yes  |        |           |       
-manage_permissions        |   yes  |        |           |       
-assign_roles              |   yes  |  yes   |           |       
-view_audit_logs           |   yes  |        |           |       
-manage_system_settings    |   yes  |        |           |       
-manage_tags               |   yes  |  yes   |    yes    |       
-create_post               |   yes  |  yes   |    yes    |  yes  
-edit_own_post             |        |        |           |  yes  
-edit_any_post             |   yes  |  yes   |    yes    |       
-delete_own_post           |        |        |           |  yes  
-delete_any_post           |   yes  |  yes   |    yes    |       
-approve_post_comment      |   yes  |  yes   |    yes    |       
-create_event              |   yes  |  yes   |    yes    |  yes  
-edit_own_event            |        |        |           |  yes  
-edit_any_event            |   yes  |  yes   |    yes    |       
-delete_own_event          |        |        |           |  yes  
-delete_any_event          |   yes  |  yes   |    yes    |       
-approve_event_comment     |   yes  |  yes   |    yes    |       
+Permission Name             | Super  | Admin  | Redacteur | Auteur | Organisator | Planner
+----------------------------|--------|--------|-----------|--------|-------------|---------
+manage_users                |   yes  |  yes   |           |        |             |        
+manage_roles                |   yes  |        |           |        |             |        
+manage_permissions          |   yes  |        |           |        |             |        
+assign_roles                |   yes  |  yes   |           |        |             |        
+view_audit_logs             |   yes  |  yes   |           |        |             |        
+manage_system_settings      |   yes  |        |           |        |             |        
+manage_tags                 |   yes  |  yes   |    yes    |        |             |        
+manage_static_content       |   yes  |  yes   |    yes    |        |             |        
+create_post                 |   yes  |  yes   |    yes    |  yes   |             |        
+edit_own_post               |        |        |           |  yes   |             |        
+edit_any_post               |   yes  |  yes   |    yes    |        |             |        
+delete_own_post             |        |        |           |  yes   |             |        
+delete_any_post             |   yes  |  yes   |    yes    |        |             |        
+approve_post_comment        |   yes  |  yes   |    yes    |        |             |        
+publish_unpublish_post      |        |        |    yes    |        |             |        
+create_event                |   yes  |  yes   |           |        |     yes     |  yes   
+edit_own_event              |        |        |           |        |             |  yes   
+edit_any_event              |   yes  |  yes   |           |        |     yes     |        
+delete_own_event            |        |        |           |        |             |  yes   
+delete_any_event            |   yes  |  yes   |           |        |     yes     |        
+approve_event_comment       |   yes  |  yes   |           |        |     yes     |        
+publish_unpublish_event     |        |        |           |        |     yes     |        
+
+=== PAGE ACCESS TABLE ===
+
+Page                        | Super | Admin | Redacteur | Auteur | Organisator | Planner
+----------------------------|-------|-------|-----------|--------|-------------|--------
+Dashboard                   |  yes  |  yes  |   yes     |  yes   |    yes      |  yes
+Nieuwe gebruiker            |  yes  |  yes  |           |        |             |      
+Gebruikers beheren          |  yes  |  yes  |           |        |             |      
+Rollen beheren              |  yes  |  yes  |           |        |             |      
+Rechten beheren             |  yes  |       |           |        |             |      
+Nieuwe post                 |  yes  |  yes  |   yes     |  yes   |             |      
+Posts beheren               |  yes  |  yes  |   yes     |  yes   |             |      
+Webinhoud beheren           |  yes  |  yes  |   yes     |        |             |      
+Tags beheren                |  yes  |  yes  |   yes     |        |             |      
+Nieuw evenement             |  yes  |  yes  |           |        |    yes      |  yes
+Evenementen beheren         |  yes  |  yes  |           |        |    yes      |  yes
+Mailing                     |  yes  |  yes  |           |        |             |      
+Logboek                     |  yes  |  yes  |           |        |             |      
+Profielgegevens bewerken    |  yes  |  yes  |   yes     |  yes   |    yes      |  yes
+Wachtwoord wijzigen         |  yes  |  yes  |   yes     |  yes   |    yes      |  yes

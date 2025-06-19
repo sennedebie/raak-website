@@ -7,6 +7,9 @@
 .section3 { background-color: #f17fb2; }
 .section4 { background-color: #ee3a37; }
 
+section {
+    padding-top: 0;
+}
 
 /* ════════════════════════════════════════════════ */
 /* ▶ LOGIN CONTAINER                                */
