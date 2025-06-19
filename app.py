@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 # ════════════════════════════════════════════════
 
 # Load environment variables from .env file (for development deployment only)
-load_dotenv()
+# load_dotenv()
 
 
 # ════════════════════════════════════════════════
@@ -726,8 +726,8 @@ def generate_username(first_name, last_name):
 if __name__ == '__main__':
 
     # For production deploy only
-    # app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
 
     # For development deploy only
-    app.run(debug=True)
+    # app.run(debug=True)
 
