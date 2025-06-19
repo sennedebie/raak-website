@@ -29,7 +29,8 @@ from datetime import datetime, timezone
 # ════════════════════════════════════════════════
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")  # Use your .env secret
+# app.secret_key = os.getenv("SECRET_KEY")  # Use your .env secret
+app.secret_key = 'mysecretkey'
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
