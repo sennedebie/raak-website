@@ -8,7 +8,7 @@
 <section class="section1">
   <p class="subtitle1">Login</p>
 
-  <form class="login-container" method="POST">
+  <form class="login-container" action="{{ url_for('login') }}" method="POST">
     <input name="username" placeholder="Gebruikersnaam" required /><br />
     <input
       name="password"
