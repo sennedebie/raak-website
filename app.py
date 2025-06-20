@@ -326,29 +326,24 @@ def login():
         if not user:
             flash("Ongeldige logingegevens.", "danger")
             return redirect(url_for("login"))
-        # Check provided password against hash stored in database
-        if user and check_password_hash(user["password_hash"], password):
-
-            if not user["is_active"]:
-                flash("Gebruiker is niet actief.", "danger")
-                return redirect(url_for("login"))
-            # Use User.get to fetch roles and permissions
-            user_obj = User.get(user["id"])
-
-            if user_obj is None:
-                flash("Gebruiker niet gevonden.", "warning")
-                return redirect(url_for("login"))
-
-            if user["require_password_change"]:
-                login_user(user_obj)
-                return redirect(url_for("set_password"))
-            
-            login_user(user_obj)
-            return redirect(url_for("dashboard"))
-
-        else:
+        elif not check_password_hash(user["password_hash"], password):
             flash("Ongeldige logingegevens.", "danger")
             return redirect(url_for("login"))
+        elif not user["is_active"]:
+            flash("Gebruiker is niet actief.", "danger")
+            return redirect(url_for("login"))
+
+        user_obj = User.get(user["id"])
+        if user_obj is None:
+            flash("Gebruiker niet gevonden.", "warning")
+            return redirect(url_for("login"))
+
+        if user["require_password_change"]:
+            login_user(user_obj)
+            return redirect(url_for("set_password"))
+
+        login_user(user_obj)
+        return redirect(url_for("dashboard"))
 
     return render_template("public/login.html")
 
