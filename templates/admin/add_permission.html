@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/add_permission.css') }}"
+/>
+{% endblock %} {% block title %}Recht toevoegen{% endblock %} {% block content
+%}
+
+<div class="form">
+  <form action="/nieuw-recht" method="POST">
+    <h1>Nieuw recht</h1>
+
+    <label class="label1" for="name"
+      >Naam <span class="required-field">*</span></label
+    >
+    <input type="text" id="name" name="name" required />
+    <label class="label1" for="description"
+      >Beschrijving <span class="required-field">*</span></label
+    >
+    <input type="text" id="description" name="description" required />
+
+    <label class="label1" for="roles"
+      >Toevoegen aan rol <span class="required-field">*</span></label
+    >
+    <div id="roles" class="checkbox-group" required>
+      {% for role in roles %}
+      <div class="checkbox-item">
+        <input
+          type="checkbox"
+          id="role_{{ role.id }}"
+          name="roles"
+          value="{{ role.id }}"
+        />
+        <label for="role_{{ role.id }}">{{ role.name|capitalize }}</label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="normal-button">Aanmaken</button>
+  </form>
+  <p class="form-text">
+    Gebruik dit formulier om een nieuwe recht te registreren. Rechten kunnen
+    gekoppeld worden aan bestaande rollen.
+  </p>
+  <p class="form-text">* Dit is een vereist veld.</p>
+</div>
+{% endblock%}

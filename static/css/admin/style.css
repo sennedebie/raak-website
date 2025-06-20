@@ -247,7 +247,7 @@ label {
     text-align: left;
     font-size: clamp(1rem, 2vw, 1.25rem);
     color: grey;
-    margin-bottom: 5px;
+    margin-bottom: 15px;
 }
 
 input[type=text], input[type=email], select, textarea {
@@ -278,16 +278,9 @@ textarea {
     color: #ee3a37;
 }
 
-.checkboxes label {
-    display: block;
-    margin: 8px 0 8px 0;
-    font-size: 16px;
-    cursor: pointer;
-    font-size: 18px;
-}
-
-.checkboxes input[type="checkbox"] {
-    margin-right: 8px;
+.checkbox-group label {
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 /* ════════════════════════════════════════════════ */

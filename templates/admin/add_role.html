@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/add_role.css') }}"
+/>
+{% endblock %} {% block title %}Rol toevoegen{% endblock %} {% block content %}
+
+<div class="form">
+  <form action="/nieuwe-rol" method="POST">
+    <h1>Nieuwe rol</h1>
+
+    <label class="label1" for="name"
+      >Naam <span class="required-field">*</span></label
+    >
+    <input type="text" id="name" name="name" required />
+    <label class="label1" for="description"
+      >Beschrijving <span class="required-field">*</span></label
+    >
+    <input type="text" id="description" name="description" required />
+
+    <label class="label1" for="permissions"
+      >Rechten koppelen <span class="required-field">*</span></label
+    >
+    <div id="permissions" class="checkbox-group" required>
+      {% for permission in permissions %}
+      <div class="checkbox-item">
+        <input
+          type="checkbox"
+          id="permission_{{ permission.id }}"
+          name="permissions"
+          value="{{ permission.id }}"
+        />
+        <label for="permission_{{ permission.id }}">{{ permission.name }}</label>
+      </div>
+      {% endfor %}
+
+    <button type="submit" class="normal-button">Aanmaken</button>
+  </form>
+  <p class="form-text">
+    Gebruik dit formulier om een nieuwe rol te registreren en bijhorende rechten te koppelen. 
+  </p>
+  <p class="form-text">* Dit is een vereist veld.</p>
+</div>
+{% endblock%}

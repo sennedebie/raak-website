@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 # ════════════════════════════════════════════════
 
 # Load environment variables from .env file (for development deployment only)
-# load_dotenv()
+load_dotenv()
 
 
 # ════════════════════════════════════════════════
@@ -29,8 +29,7 @@ from datetime import datetime, timezone
 # ════════════════════════════════════════════════
 
 app = Flask(__name__)
-# app.secret_key = os.getenv("SECRET_KEY")  # Use your .env secret
-app.secret_key = 'mysecretkey'
+app.secret_key = os.environ.get("SECRET_KEY")
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -103,6 +102,7 @@ class User(UserMixin):
 
         finally:
             cur.close()
+            conn.close()
             conn.close()
 
         # Return user object, attach require_password_change as attribute
@@ -538,9 +538,114 @@ def add_user():
         conn.rollback()
         flash(f"Er is een fout opgetreden: {e}", "danger")
     finally:
+        if 'cur' in locals() and cur:
+            cur.close()
+        if 'conn' in locals() and conn:
+            conn.close()
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ADD NEW ROLE
+# ════════════════════════════════════════════════
+
+@app.route("/nieuwe-rol", methods=["GET", "POST"], endpoint="add_role")
+def add_role():
+    ''' Add new role to database. '''
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM permissions")
+    all_permissions = cur.fetchall()
+
+
+    try:
+        if request.method == "POST":
+            name = request.form.get("name", "")
+            name = re.sub(r'\s+', '_', name.strip().lower())
+            description = request.form.get("description", "")
+
+            # Fetch current user from session (if logged in), else set to None
+            created_by = current_user.id if current_user.is_authenticated else None
+            updated_by = current_user.id if current_user.is_authenticated else None
+            created_at = datetime.now(timezone.utc)
+            updated_at = datetime.now(timezone.utc)
+
+            cur.execute(
+                "INSERT INTO roles (name, description, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s)",
+                (name, description, created_by, updated_by, created_at, updated_at)
+            )
+
+            conn.commit()
+            flash('Rol toegevoegd aan database.', 'success')
+            return redirect(url_for("manage_permissions"))
+        return render_template("admin/add_role.html", permissions=all_permissions)
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "danger")
+    finally:
         cur.close()
 
 
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ADD NEW PERMISSION
+# ════════════════════════════════════════════════
+
+@app.route("/nieuw-recht", methods=["GET", "POST"], endpoint="add_permission")
+def add_permission():
+    ''' Add new permission to database. '''
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM roles")
+    all_roles = cur.fetchall()
+
+    try:
+        if request.method == "POST":
+            name = request.form.get("name", "")
+            name = re.sub(r'\s+', '_', name.strip().lower())
+            description = request.form.get("description", "")
+            selected_roles = request.form.getlist("roles")
+
+            # Fetch current user from session (if logged in), else set to None
+            created_by = current_user.id if current_user.is_authenticated else None
+            updated_by = current_user.id if current_user.is_authenticated else None
+            created_at = datetime.now(timezone.utc)
+            updated_at = datetime.now(timezone.utc)
+
+            # Insert new permission and return its id
+            cur.execute(
+                "INSERT INTO permissions (name, description, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                (name, description, created_by, updated_by, created_at, updated_at)
+            )
+            permission_row = cur.fetchone()
+            if not permission_row or "id" not in permission_row:
+                raise Exception("Niet mogelijk om recht toe te voegen of id op te halen.")
+            permission_id = permission_row["id"]
+
+            conn.commit()
+            flash('Recht toegevoegd aan database.', 'success')
+
+            for role_id in selected_roles:
+                try:
+                    cur.execute("INSERT INTO role_permission_map (role_id, permission_id) VALUES (%s, %s)", (role_id, permission_id))
+                except Exception as insert_exc:
+                    conn.rollback()
+                    flash(f"Fout bij koppelen van recht aan rol (role_id={role_id}): {insert_exc}", "danger")
+                    return redirect(url_for("add_permission"))
+
+
+            conn.commit()
+            flash('Recht gekoppeld aan rol(len).', 'success')
+        
+            return redirect(url_for("dashboard"))
+        return render_template("admin/add_permission.html", roles=all_roles)
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "danger")
+    finally:
+        cur.close()
 
 
 # ════════════════════════════════════════════════
@@ -722,8 +827,8 @@ def generate_username(first_name, last_name):
 if __name__ == '__main__':
 
     # For production deploy only
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    # app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
 
     # For development deploy only
-    # app.run(debug=True)
+    app.run(debug=True)
 
