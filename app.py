@@ -101,7 +101,10 @@ class User(UserMixin):
             permissions = [row['name'] for row in cur.fetchall()]
 
         finally:
-            cur.close()
+            if 'cur' in locals() and cur:
+                cur.close()
+            if 'conn' in locals() and conn:
+                conn.close()
             conn.close()
             conn.close()
 
@@ -212,17 +215,40 @@ def index():
     '''
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("""
-    SELECT p.*, pi.url AS image_url
-    FROM posts p
-    LEFT JOIN post_images pi ON p.id = pi.post_id
-    WHERE p.is_pinned = %s and pi.is_main = %s
-    ORDER BY p.created_at DESC
-    LIMIT 1""", (True, True))
-    posts = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('public/index.html', posts=posts)
+    try:
+        cur.execute("""
+        SELECT id, title, content, created_at
+        FROM posts
+        WHERE is_pinned = %s and is_published = %s and is_deleted = %s and visibility = %s
+        ORDER BY created_at DESC
+        LIMIT 4""", (True, True, False, "public"))
+        posts = cur.fetchall()
+
+        for post in posts:
+            post_id = post["id"]
+            cur.execute("""
+                SELECT t.name
+                FROM tag_map tm
+                LEFT JOIN tags t ON tm.tag_id = t.id
+                WHERE tm.entity_type = %s AND tm.entity_id = %s
+                ORDER BY t.name ASC
+            """, ("post", post_id))
+            post_tags = [row["name"] for row in cur.fetchall()]
+            post["tags"] = post_tags  # Attach tags to the post
+
+        for post in posts:
+            post_id = post["id"]
+            cur.execute("""
+                SELECT url
+                FROM post_images
+                WHERE post_id = %s AND is_main = %s
+            """, (post_id, True))
+            image_row = cur.fetchone()
+            image_url = image_row["url"] if image_row else None
+            post["image_url"] = image_url
+
+    finally:
+        return render_template("public/index.html", posts=posts)
 
 
 # ════════════════════════════════════════════════
@@ -252,7 +278,23 @@ def news():
 @app.route("/agenda", endpoint="agenda")
 def agenda():
     ''' Agenda page '''
-    return render_template("public/agenda.html")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT title, subtitle, event_date, location
+            FROM events
+            WHERE is_published = %s 
+              AND is_deleted = %s 
+              AND visibility = %s 
+              AND event_date >= CURRENT_DATE
+            ORDER BY event_date ASC
+            LIMIT 10""", (True, False, "public"))
+        events = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+    return render_template("public/agenda.html", events=events)
 
 
 # ════════════════════════════════════════════════
@@ -563,6 +605,7 @@ def add_role():
             name = request.form.get("name", "")
             name = re.sub(r'\s+', '_', name.strip().lower())
             description = request.form.get("description", "")
+            selected_permissions = request.form.getlist("permissions")
 
             # Fetch current user from session (if logged in), else set to None
             created_by = current_user.id if current_user.is_authenticated else None
@@ -571,13 +614,31 @@ def add_role():
             updated_at = datetime.now(timezone.utc)
 
             cur.execute(
-                "INSERT INTO roles (name, description, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s)",
+                "INSERT INTO roles (name, description, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
                 (name, description, created_by, updated_by, created_at, updated_at)
             )
 
+            role_row = cur.fetchone()
+            if not role_row or "id" not in role_row:
+                raise Exception("Niet mogelijk om rol toe te voegen of id op te halen.")
+            role_id = role_row["id"]
             conn.commit()
             flash('Rol toegevoegd aan database.', 'success')
-            return redirect(url_for("manage_permissions"))
+
+
+            for permission_id in selected_permissions:
+                try:
+                    cur.execute("INSERT INTO role_permission_map (role_id, permission_id) VALUES (%s, %s)", (role_id, permission_id))
+                except Exception as insert_exc:
+                    conn.rollback()
+                    flash(f"Fout bij koppelen van recht aan rol (role_id={role_id}): {insert_exc}", "danger")
+                    return redirect(url_for("add_permission"))
+
+
+            conn.commit()
+            flash('Recht gekoppeld aan rol(len).', 'success')
+
+            return redirect(url_for("dashboard"))
         return render_template("admin/add_role.html", permissions=all_permissions)
 
     except Exception as e:
@@ -652,7 +713,6 @@ def add_permission():
 # ▶ ADMIN: MANAGE NEWS POSTS
 # ════════════════════════════════════════════════
 
-# To be delete -> Centralized dashboard for all special users
 @app.route('/author', endpoint="author")
 @role_required('admin', 'author')
 def author():
@@ -667,44 +727,65 @@ def author():
 
 
 # ════════════════════════════════════════════════
-# ▶ ADMIN: ADD NEWS POST
+# ▶ ADMIN: ADD NEW POST
 # ════════════════════════════════════════════════
 
-# To be changed
-@app.route('/redactie/nieuwsbericht-toevoegen', methods=['GET', 'POST'])
+@app.route("/nieuwe-post", methods=["GET", "POST"], endpoint="add_post")
 def add_post():
-    ''' Add news post to database '''
+    ''' Add new news post to database '''
 
-    if request.method == 'POST':
-        title = request.form['title']
-        content = request.form['content']
-        category = request.form['category']
-        date = request.form['date']
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM tags")
+    all_tags = cur.fetchall()
 
-        image_file = request.files.get('image')
-        filename = None
+    try:
+        if request.method == "POST":
+            title = request.form.get("title")
+            content = request.form.get("content")
+            is_published = False # Default
+            visibility = "public" # Default
+            is_deleted = False # Default
+            is_pinned = False # Default
+            selected_tags = request.form.getlist("tags")
 
-        if image_file and image_file.filename != '':
-            if allowed_file(image_file.filename):
-                filename = secure_filename(image_file.filename)
-                image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                image_file.save(image_path)
-            else:
-                flash('Alleen afbeeldingen zijn toegestaan (jpg, jpeg, png, gif)', 'danger')
-                return redirect(request.url)
+            # Fetch current user from session (if logged in), else set to None
+            created_by = current_user.id if current_user.is_authenticated else None
+            updated_by = current_user.id if current_user.is_authenticated else None
+            created_at = datetime.now(timezone.utc)
+            updated_at = datetime.now(timezone.utc)
 
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('INSERT INTO posts (title, content, category, date, image_filename) VALUES (%s, %s, %s, %s, %s)',
-                    (title, content, category, date, filename))
-        conn.commit()
+            # Insert new post and return its id
+            cur.execute(
+                "INSERT INTO posts (title, content, is_published, visibility, is_deleted, is_pinned, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                (title, content, is_published, visibility, is_deleted, is_pinned, created_by, updated_by, created_at, updated_at)
+            )
+            post_row = cur.fetchone()
+            if not post_row or "id" not in post_row:
+                raise Exception("Niet mogelijk om post toe te voegen of id op te halen.")
+            post_id = post_row["id"]
+
+            conn.commit()
+            flash('Post toegevoegd aan database.', 'success')
+
+            for tag_id in selected_tags:
+                try:
+                    cur.execute("INSERT INTO tag_map (entity_type, entity_id, tag_id) VALUES (%s, %s, %s)", ("post", post_id, tag_id))
+                except Exception:
+                    conn.rollback()
+                    flash(f"Fout bij koppelen van post aan tag.", "danger")
+                    return redirect(url_for("add_post"))
+            conn.commit()
+        
+            return redirect(url_for("dashboard"))
+        return render_template("admin/add_post.html", tags=all_tags)
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "danger")
+        return render_template("admin/add_post.html", tags=all_tags)
+    finally:
         cur.close()
-        conn.close()
-
-        flash('Bericht toegevoegd!', 'success')
-        return redirect(url_for('author'))
-
-    return render_template('add_post.html', form_title='Nieuw Bericht', post=None)
 
 
 # ════════════════════════════════════════════════
@@ -782,6 +863,76 @@ def delete_post(post_id):
     return redirect(url_for('author'))
 
 
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ADD NEW EVENT
+# ════════════════════════════════════════════════
+# Action types, recurrences and exceptions not set up yet
+@app.route("/nieuw-evenement", methods=["GET", "POST"], endpoint="add_event")
+def add_event():
+    ''' Add new news event to database '''
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM tags") # Fetch all tags
+    all_tags = cur.fetchall()
+    cur.execute("SELECT id, name FROM event_action_types") # Fetch all action types
+    all_event_action_types = cur.fetchall()
+
+    try:
+        if request.method == "POST":
+            title = request.form.get("title")
+            subtitle = request.form.get("subtitle")
+            description = request.form.get("description")
+            event_date_str = request.form.get("event_date")
+            location = request.form.get("location")
+            is_published = False # Default
+            visibility = "public" # Default
+            is_deleted = False # Default
+            action_type = request.form.get("action_type")
+            selected_tags = request.form.getlist("tags")
+
+            event_date = datetime.strptime(event_date_str, "%Y-%m-%dT%H:%M")
+
+
+            # Fetch current user from session (if logged in), else set to None
+            created_by = current_user.id if current_user.is_authenticated else None
+            updated_by = current_user.id if current_user.is_authenticated else None
+            created_at = datetime.now(timezone.utc)
+            updated_at = datetime.now(timezone.utc)
+
+            # Insert new event and return its id
+            cur.execute(
+                "INSERT INTO events (title, subtitle, description, event_date, location, is_published, visibility, is_deleted, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                (title, subtitle, description, event_date, location, is_published, visibility, is_deleted, created_by, updated_by, created_at, updated_at)
+            )
+            event_row = cur.fetchone()
+            if not event_row or "id" not in event_row:
+                raise Exception("Niet mogelijk om evenement toe te voegen of id op te halen.")
+            event_id = event_row["id"]
+
+            conn.commit()
+            flash('Evenement toegevoegd aan database.', 'success')
+
+            for tag_id in selected_tags:
+                try:
+                    cur.execute("INSERT INTO tag_map (entity_type, entity_id, tag_id) VALUES (%s, %s, %s)", ("event", event_id, tag_id))
+                except Exception:
+                    conn.rollback()
+                    flash(f"Fout bij koppelen van evenement aan tag.", "danger")
+                    return redirect(url_for("add_event"))
+            conn.commit()
+        
+            return redirect(url_for("dashboard"))
+        return render_template("admin/add_event.html", tags=all_tags)
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "danger")
+        return render_template("admin/add_event.html", tags=all_tags)
+    finally:
+        cur.close()
 
 
 # ════════════════════════════════════════════════

@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/add_post.css') }}"
+/>
+{% endblock %} {% block title %}Post toevoegen{% endblock %} {% block content %}
+
+<div class="form">
+  <form action="/nieuwe-post" method="POST">
+    <h1>Nieuwe post</h1>
+
+    <label class="label1" for="title"
+      >Titel <span class="required-field">*</span></label
+    >
+    <input type="text" id="title" name="title" required />
+
+    <label class="label1" for="content"
+      >Inhoud <span class="required-field">*</span></label
+    >
+    <textarea id="content" name="content" required></textarea>
+
+    <label class="label1" for="tags">Tags toevoegen</label>
+    <div id="tags" class="checkbox-group">
+      {% for tag in tags %}
+      <div class="checkbox-item">
+        <input
+          type="checkbox"
+          id="tag_{{ tag.id }}"
+          name="tags"
+          value="{{ tag.id }}"
+        />
+        <label for="tag_{{ tag.id }}">{{ tag.name|capitalize }}</label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="normal-button">Opslaan</button>
+  </form>
+  <p class="form-text">
+    Gebruik dit formulier om een nieuwe nieuwspost aan te maken. De post wordt
+    opgeslagen als concept en kan gepubliceerd worden door de redacteur.
+  </p>
+  <p class="form-text">* Dit is een vereist veld.</p>
+</div>
+{% endblock%}

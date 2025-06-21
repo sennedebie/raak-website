@@ -1,5 +1,3 @@
-
-
 {% extends "public/base.html" %} {% block extra_css %}
 <link
   rel="stylesheet"
@@ -9,41 +7,54 @@
 
 <!-- Section 1 -->
 <section class="section1">
-  <p class="title">Evenementen</h1>
-  <p class="subtitle1">in Leerbeek-Kester</h2>
-  <p class="subtitle2">
-    Ben jij ook Raak? Doe mee!
-  </p>
+  <p class="title">Evenementen</p>
+  <p class="subtitle1">in Leerbeek-Kester</p>
+  <p class="subtitle2">Ben jij ook Raak? Doe mee!</p>
 </section>
 
 <hr class="section-divider" />
 
 <section class="section2">
+  <!-- ════════════════════════════════════════════════ -->
+  <!-- ▶ EVENT ITEM STYLING TEST                        -->
+  <!-- ════════════════════════════════════════════════ -->
 
-<!-- ════════════════════════════════════════════════ -->
-<!-- ▶ EVENT ITEM STYLING TEST                        -->
-<!-- ════════════════════════════════════════════════ -->
-
-<a href="/jouw-event-url" class="event-link">
-  <div class="event-item">
-    <div class="event-date">
-      <p class="event-weekday">Zat</p>
-      <p class="event-day">23</p>
-      <p class="event-month">mei</p>
-    </div>
-    <div class="event-content">
-      <div class="event-title">
-        <p>KWB Jogging in Leerbeek</p>
+  {% for event in events %} {% set dt = event.event_date %}
+  <a href="{{ event.url or '#' }}" class="event-link">
+    <div class="event-item">
+      <div class="event-date">
+        <p class="event-weekday">
+          {{
+          dt.strftime('%a')|replace('Mon','ma')|replace('Tue','di')|replace('Wed','wo')|replace('Thu','do')|replace('Fri','vr')|replace('Sat','za')|replace('Sun','zo')
+          }}
+        </p>
+        <p class="event-day">{{ dt.day }}</p>
+        <p class="event-month">
+          {{ dt.strftime('%B')|lower |replace('january','januari')
+          |replace('february','februari') |replace('march','maart')
+          |replace('april','april') |replace('may','mei')
+          |replace('june','juni') |replace('july','juli')
+          |replace('august','augustus') |replace('september','september')
+          |replace('october','oktober') |replace('november','november')
+          |replace('december','december') }}
+        </p>
       </div>
-      <div class="event-description">
-        Dit weekend ...
+      <div class="event-content">
+        <div class="event-header">
+          <p class="event-title">{{ event.title }}</p>
+          <p class="event-time">{{ dt.strftime('%H:%M') }}</p>
+          <p class="event-location">{{ event.location }}</p>
+        </div>
+
+        <div class="event-description">
+          {{ event.subtitle[:150] }}{% if event.subtitle|length > 150 %}...{%
+          endif %}
+        </div>
       </div>
+      <div class="event-actions"></div>
     </div>
-  </div>
-</a>
-
-
+  </a>
+  {% endfor %}
 </section>
 
-{% endblock%}
-
+{% endblock %}

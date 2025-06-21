@@ -167,7 +167,7 @@
                   ></i>
                 </a>
                 {% else %}
-                <a href="#">Nieuwe post</a>
+                <a href="{{ url_for('add_post') }}">Nieuwe post</a>
                 {% endif %}
               </li>
               <li>
@@ -238,7 +238,7 @@
                   ></i>
                 </a>
                 {% else %}
-                <a href="#">Nieuw evenement</a>
+                <a href="{{ url_for('add_event') }}">Nieuw evenement</a>
                 {% endif %}
               </li>
               <li>
@@ -255,6 +255,21 @@
                 </a>
                 {% else %}
                 <a href="#">Evenementen beheren</a>
+                {% endif %}
+              </li>
+              <li>
+                {% if not current_user.is_authenticated or 'super' not in
+                current_user.roles and 'admin' not in current_user.roles and
+                'organisator' not in current_user.roles %}
+                <a class="disabled-link" tabindex="-1">
+                  Acties beheren
+                  <i
+                    class="fa-solid fa-lock"
+                    style="margin-left: 0.5em; color: #ee3a37"
+                  ></i>
+                </a>
+                {% else %}
+                <a href="#">Acties beheren</a>
                 {% endif %}
               </li>
             </ul>

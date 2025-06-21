@@ -6,60 +6,8 @@
 {% endblock %} {% block title %}Dashboard{% endblock %} {% block content %}
 
 <section class="section1">
-  <div class="dashboard-header">
-    <h2 class="greeting">Welkom {{ current_user.first_name }}</h2>
-    <div class="roles-list">
-      {% for role in current_user.roles %}
-      <span class="role-badge">{{ role }}</span>
-      {% endfor %}
-    </div>
-  </div>
-<p>Authenticated: {{ current_user.is_authenticated }}</p>
-  <div class="dashboard-grid">
-    <div class="panel1">
-      <p class="panel-title">Profiel</p>
-      <ul>
-        <li>Persoonsgegevens bewerken</li>
-        <li>Wachtwoord wijzigen</li>
-      </ul>
-    </div>
+  <h2 class="greeting">Welkom {{ current_user.first_name }}</h2>
 
-    <div class="panel1">
-      <p class="panel-title">Gebruikerssysteem</p>
-      <ul>
-        <li>Gebruikers beheren</li>
-        <li>Rollen beheren</li>
-        <li>Rechten beheren</li>
-      </ul>
-    </div>
-
-    <div class="panel1">
-      <p class="panel-title">Mailing</p>
-      <ul>
-        <li>SMTP server instellingen</li>
-        <li>Contactformulieren</li>
-      </ul>
-    </div>
-
-    <div class="panel1">
-      <p class="panel-title">Redactie</p>
-      <ul>
-        <li>Nieuwsbericht toevoegen</li>
-        <li>Nieuwsberichten beheren</li>
-        <li>Webinhoud beheren</li>
-        <li>Tags beheren</li>
-
-
-      </ul>
-    </div>
-
-    <div class="panel1">
-      <p class="panel-title">Organisatie</p>
-      <ul>
-        <li>Evenement toevoegen</li>
-        <li>Evenementen beheren</li>
-      </ul>
-    </div>
-
+  <p>Authenticated: {{ current_user.is_authenticated }}</p>
 </section>
 {% endblock %}
