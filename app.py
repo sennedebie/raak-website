@@ -221,7 +221,7 @@ def index():
         FROM posts
         WHERE is_pinned = %s and is_published = %s and is_deleted = %s and visibility = %s
         ORDER BY created_at DESC
-        LIMIT 4""", (True, True, False, "public"))
+        LIMIT 3""", (True, True, False, "public"))
         posts = cur.fetchall()
 
         for post in posts:
@@ -944,6 +944,48 @@ def add_event():
         conn.rollback()
         flash(f"Er is een fout opgetreden: {e}", "danger")
         return render_template("admin/add_event.html", tags=all_tags)
+    finally:
+        cur.close()
+
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ADD NEW TAG
+# ════════════════════════════════════════════════
+@app.route("/nieuwe-tag", methods=["GET", "POST"], endpoint="add_tag")
+def add_tag():
+    ''' Add new tag to database '''
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM tags") # Fetch all tags
+    all_tags = cur.fetchall()
+    all_tag_names = [row['name'] for row in all_tags]
+
+    try:
+        if request.method == "POST":
+            name = request.form.get("name")
+
+            if not name or not name.strip():
+                raise Exception("Tagnaam mag niet leeg zijn of alleen uit spaties bestaan.")
+
+            clean_name = name.strip().lower()
+
+            if clean_name in [t.lower() for t in all_tag_names]:
+                raise Exception("Deze tag bestaat al.")
+
+            else:
+                cur.execute("INSERT INTO tags (name) VALUES (%s)", (clean_name,))
+                conn.commit()
+                flash('Tag toegevoegd aan database.', 'success')
+        
+            return redirect(url_for("dashboard"))
+        return render_template("admin/add_tag.html")
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "danger")
+        return render_template("admin/add_tag.html")
     finally:
         cur.close()
 
