@@ -4,7 +4,7 @@
 
 .section1 { background-color: #04a7d9; }
 .section2 { background-color: #f17fb2; }
-.section3 { background-color: #f17fb2; }
+.section3 { background-color: #3aba9b; }
 .section4 { background-color: #ee3a37; }
 
 
@@ -44,11 +44,14 @@ li .nav-button-agenda:hover {
     padding-bottom: 15px;
     box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
     transition: border-color 0.2s;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .event-item:hover {
     border-color: #0051a4; /* Blue border on hover */
 }
+
 
 .event-date {
     display: inline-block;
@@ -129,4 +132,80 @@ li .nav-button-agenda:hover {
 
 a:hover {
     text-decoration: none;
+}
+
+/* Responsive styles for tablets and below */
+@media (max-width: 900px) {
+  .event-item {
+    width: 95vw;
+    gap: 24px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .event-content {
+    padding: 0;
+  }
+  .event-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+  .event-title {
+    font-size: 18px;
+  }
+  .event-time,
+  .event-location {
+    font-size: 16px;
+    margin-top: 4px;
+  }
+  .event-day {
+    font-size: 24px;
+  }
+  .event-weekday,
+  .event-month {
+    font-size: 16px;
+  }
+  .event-description {
+    font-size: 14px;
+  }
+}
+
+/* Extra small devices (phones) */
+@media (max-width: 600px) {
+  .event-item {
+    width: 100vw;
+    border-radius: 0;
+    box-shadow: none;
+    gap: 12px;
+    padding: 8px 4px;
+  }
+  .event-date {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .event-header {
+    gap: 0.25em;
+  }
+  .event-title {
+    font-size: 16px;
+  }
+  .event-time,
+  .event-location {
+    font-size: 14px;
+    padding: 2px 4px;
+  }
+  .event-day {
+    font-size: 18px;
+  }
+  .event-weekday,
+  .event-month {
+    font-size: 12px;
+  }
+  .event-description {
+    font-size: 12px;
+  }
 }

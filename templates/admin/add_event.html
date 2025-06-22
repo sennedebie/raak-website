@@ -17,9 +17,19 @@ content %}
     <input type="text" id="title" name="title" required />
 
     <label class="label1" for="subtitle"
-      >Subtitel <span class="required-field">*</span></label
+      >Headliner <span class="required-field">*</span></label
     >
-    <input type="text" id="subtitle" name="subtitle" required />
+
+    <small id="subtitle-counter">0 / 150</small>
+
+    <input
+      type="text"
+      id="subtitle"
+      name="subtitle"
+      required
+      maxlength="150"
+      oninput="updateCounter()"
+    />
 
     <label class="label1" for="location"
       >Locatie <span class="required-field">*</span></label
@@ -59,4 +69,16 @@ content %}
   </p>
   <p class="form-text">* Dit is een vereist veld.</p>
 </div>
+
+<script>
+  // Letter counter
+  function updateCounter() {
+    const input = document.getElementById("subtitle");
+    const counter = document.getElementById("subtitle-counter");
+    counter.textContent = input.value.length + " / 150";
+  }
+  document.getElementById("subtitle").addEventListener("input", updateCounter);
+  // Initialize counter on page load
+  updateCounter();
+</script>
 {% endblock%}

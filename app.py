@@ -280,21 +280,34 @@ def agenda():
     ''' Agenda page '''
     conn = get_db_connection()
     cur = conn.cursor()
-    try:
-        cur.execute("""
-            SELECT title, subtitle, event_date, location
-            FROM events
-            WHERE is_published = %s 
-              AND is_deleted = %s 
-              AND visibility = %s 
-              AND event_date >= CURRENT_DATE
-            ORDER BY event_date ASC
-            LIMIT 10""", (True, False, "public"))
-        events = cur.fetchall()
-    finally:
-        cur.close()
-        conn.close()
-    return render_template("public/agenda.html", events=events)
+    # Fetch upcoming events
+    cur.execute("""
+        SELECT title, subtitle, event_date, location
+        FROM events
+        WHERE is_published = %s 
+            AND is_deleted = %s 
+            AND visibility = %s 
+            AND event_date >= CURRENT_DATE
+        ORDER BY event_date ASC
+        LIMIT 10""", (True, False, "public"))
+    u_events = cur.fetchall()
+
+    # Fetch past events
+    cur.execute("""
+        SELECT title, subtitle, event_date, location
+        FROM events
+        WHERE is_published = %s 
+            AND is_deleted = %s 
+            AND visibility = %s 
+            AND event_date < CURRENT_DATE
+            AND event_date >= (CURRENT_DATE - INTERVAL '30 days')
+        ORDER BY event_date DESC
+        LIMIT 10""", (True, False, "public"))
+    p_events = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return render_template("public/agenda.html", u_events=u_events, p_events=p_events)
 
 
 # ════════════════════════════════════════════════

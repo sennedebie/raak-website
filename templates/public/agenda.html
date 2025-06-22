@@ -15,11 +15,54 @@
 <hr class="section-divider" />
 
 <section class="section2">
-  <!-- ════════════════════════════════════════════════ -->
-  <!-- ▶ EVENT ITEM STYLING TEST                        -->
-  <!-- ════════════════════════════════════════════════ -->
+  <p class="subtitle1">Binnenkort</p>
 
-  {% for event in events %} {% set dt = event.event_date %}
+  <!-- Upcoming events -->
+  {% for event in u_events %} {% set dt = event.event_date %}
+  <a href="{{ event.url or '#' }}" class="event-link">
+    <div class="event-item">
+      <div class="event-date">
+        <p class="event-weekday">
+          {{
+          dt.strftime('%a')|replace('Mon','ma')|replace('Tue','di')|replace('Wed','wo')|replace('Thu','do')|replace('Fri','vr')|replace('Sat','za')|replace('Sun','zo')
+          }}
+        </p>
+        <p class="event-day">{{ dt.day }}</p>
+        <p class="event-month">
+          {{ dt.strftime('%B')|lower |replace('january','januari')
+          |replace('february','februari') |replace('march','maart')
+          |replace('april','april') |replace('may','mei')
+          |replace('june','juni') |replace('july','juli')
+          |replace('august','augustus') |replace('september','september')
+          |replace('october','oktober') |replace('november','november')
+          |replace('december','december') }}
+        </p>
+      </div>
+      <div class="event-content">
+        <div class="event-header">
+          <p class="event-title">{{ event.title }}</p>
+          <p class="event-time">{{ dt.strftime('%H:%M') }}</p>
+          <p class="event-location">{{ event.location }}</p>
+        </div>
+
+        <div class="event-description">
+          {{ event.subtitle[:150] }}{% if event.subtitle|length > 150 %}...{%
+          endif %}
+        </div>
+      </div>
+      <div class="event-actions"></div>
+    </div>
+  </a>
+  {% endfor %}
+</section>
+
+<hr class="section-divider" />
+
+<section class="section3">
+  <p class="subtitle1">Net voorbij</p>
+
+  <!-- Past events -->
+  {% for event in p_events %} {% set dt = event.event_date %}
   <a href="{{ event.url or '#' }}" class="event-link">
     <div class="event-item">
       <div class="event-date">
