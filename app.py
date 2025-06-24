@@ -571,7 +571,7 @@ def add_user():
 
             # Ensure username and password are not empty
             if not first_name or not last_name or not email:
-                flash("Voornaam, achternaam en e-mail zijn vereist.")
+                flash("Voornaam, achternaam en e-mail zijn vereist.", "warning")
                 return render_template("admin/add_user.html", roles=roles)
 
             # Hash password before storing in database
@@ -597,7 +597,7 @@ def add_user():
                 (user_id, role_id)
             )
             conn.commit()
-            flash(f"Registratie gelukt. Controleer e-mail met logingegevens. {username} {token}")
+            flash(f"Registratie gelukt. Controleer e-mail met logingegevens. {username} {token}", "success")
             return redirect("/dashboard")
         return render_template("admin/add_user.html", roles=roles)
 
@@ -631,7 +631,7 @@ def reset_password(user_id):
         row = cur.fetchone()
         if row is not None and "username" in row:
             username = row["username"]
-            flash(f"Wachtwoord succesvol gereset. {username} {token}")
+            flash(f"Wachtwoord succesvol gereset. {username} {token}", "success")
         else:
             username = ""
             flash("Gebruiker niet gevonden of geen gebruikersnaam beschikbaar.", "warning")

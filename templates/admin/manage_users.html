@@ -49,7 +49,7 @@ content %}
         </form>
         <!-- Password reset -->
         <form
-          action="#"
+          action="{{ url_for('reset_password', user_id=user.id) }}"
           method="post"
           style="display: inline"
           onsubmit="return confirm('Wachtwoord resetten voor deze gebruiker?');"
