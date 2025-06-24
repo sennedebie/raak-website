@@ -286,6 +286,64 @@ textarea {
 }
 
 /* ════════════════════════════════════════════════ */
+/* ▶ TABLES                                         */
+/* ════════════════════════════════════════════════ */
+
+.table-tile {
+    border-radius: 50px;
+    padding: 50px;
+    width: 90%;
+    background: white;
+    margin-top: 50px;
+    margin-bottom: 50px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table-tile h1 {
+    color: #0051a4;
+    text-align: center;
+}
+
+table th, table td {
+    padding: 12px 24px;    /* Adds space above/below and left/right */
+    text-align: left;      /* Optional: aligns text to the left */
+    min-width: 120px;      /* Optional: ensures columns are wide enough */
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px; /* Adds vertical space between rows */
+    margin-top: 10px;
+    margin-bottom: 50px;
+}
+
+table th {
+    background-color: #0051a4;
+    color: white;
+    font-weight: bold;
+    /* Remove border-radius here */
+}
+
+table th:first-child {
+    border-top-left-radius: 30px;
+}
+
+table th:last-child {
+    border-top-right-radius: 30px;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #f5f7fb;
+}
+table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+
+/* ════════════════════════════════════════════════ */
 /* ▶ FLASH MESSAGES                                 */
 /* ════════════════════════════════════════════════ */
 

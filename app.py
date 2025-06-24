@@ -12,7 +12,8 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from database.db_connection import get_db_connection
 from mail import *
 from dotenv import load_dotenv
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from collections import defaultdict, OrderedDict
 
 
 
@@ -24,11 +25,13 @@ from datetime import datetime, timezone
 load_dotenv()
 
 
+
 # ════════════════════════════════════════════════
 # ▶ INITIATE FLASK APP
 # ════════════════════════════════════════════════
 
 app = Flask(__name__)
+app.permanent_session_lifetime = timedelta(minutes=30) # Auto log off after 30 minutes
 app.secret_key = os.environ.get("SECRET_KEY")
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -105,8 +108,6 @@ class User(UserMixin):
                 cur.close()
             if 'conn' in locals() and conn:
                 conn.close()
-            conn.close()
-            conn.close()
 
         # Return user object, attach require_password_change as attribute
         user_obj = User(user["id"], user["username"], user["first_name"], user["last_name"], roles, permissions, user["is_active"])
@@ -398,6 +399,7 @@ def login():
             return redirect(url_for("set_password"))
 
         login_user(user_obj)
+        session.permanent = True
         return redirect(url_for("dashboard"))
 
     return render_template("public/login.html")
@@ -447,6 +449,7 @@ def set_password():
         return redirect(url_for("dashboard"))
     return render_template("admin/set_password.html", username=username)
 
+    
 
 # ════════════════════════════════════════════════
 # ▶ LOGOUT
@@ -542,11 +545,12 @@ def add_user():
 
     try:
         if request.method == "POST":
+            first_name = request.form.get("firstname", "").strip().lower()
+            last_name = request.form.get("lastname", "").strip().lower()
             first_name = request.form.get("firstname", "").strip()
             last_name = request.form.get("lastname", "").strip()
-            username = generate_username(first_name, last_name) # Use function to generate username based on first and last name
-            token = str(random.randint(10000, 99999)) # Generate random 5-digit password
-            email = request.form.get("email")
+            email = request.form.get("email", "").strip()
+            username = generate_username(first_name.lower(), last_name.lower()) # Use lowercase for username generation only
             is_active = True
             require_password_change = True
             # Fetch current user from session (if logged in), else set to None
@@ -554,7 +558,11 @@ def add_user():
             updated_by = current_user.id if current_user.is_authenticated else None
             created_at = datetime.now(timezone.utc)
             updated_at = datetime.now(timezone.utc)
-            selected_role_id = request.form.get("role").lower()
+            role_value = request.form.get("role")
+            selected_role_id = role_value.lower() if role_value else None
+
+            # Generate a random token (password) for the new user
+            token = ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=6))
 
             # Ensure username and password are not empty
             if not first_name or not last_name or not email:
@@ -584,7 +592,6 @@ def add_user():
                 (user_id, role_id)
             )
             conn.commit()
-            send_login_credentials_email(email, first_name, username, token)
             flash(f"Registratie gelukt. Controleer e-mail met logingegevens. {username} {token}")
             return redirect("/dashboard")
         return render_template("admin/add_user.html", roles=roles)
@@ -592,6 +599,226 @@ def add_user():
     except Exception as e:
         conn.rollback()
         flash(f"Er is een fout opgetreden: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: RESET PASSWORD
+# ════════════════════════════════════════════════
+
+@app.route("/wachtwoord-resetten/<int:user_id>", methods=["GET", "POST"], endpoint="reset_password")
+def reset_password(user_id):
+    ''' Reset password
+     
+      This generates a new token that is send to users' email. '''
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Generate a random token (password) for the new user
+        token = ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=6))
+
+        # Hash password/token before storing in database
+        password_hash = generate_password_hash(token, method="pbkdf2:sha256")
+        cur.execute("UPDATE users SET password_hash = %s WHERE id = %s RETURNING username", (password_hash, user_id))
+        row = cur.fetchone()
+        if row is not None and "username" in row:
+            username = row["username"]
+            flash(f"Wachtwoord succesvol gereset. {username} {token}")
+        else:
+            username = ""
+            flash("Gebruiker niet gevonden of geen gebruikersnaam beschikbaar.", "warning")
+        conn.commit()
+        return redirect(url_for("manage_users"))
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "danger")
+    finally:
+        if 'cur' in locals() and cur:
+            cur.close()
+        if 'conn' in locals() and conn:
+            conn.close()
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: DELETE USER
+# ════════════════════════════════════════════════
+
+@app.route("/gebruiker-verwijderen/<int:user_id>", methods=["POST"], endpoint="delete_user")
+def delete_user(user_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # 1. Delete mapping and image records
+        cur.execute("DELETE FROM user_role_map WHERE user_id = %s", (user_id,))
+        cur.execute("DELETE FROM user_images WHERE user_id = %s", (user_id,))
+
+        # 2. Update references to deleted_user or timestamp
+        now = datetime.now(timezone.utc)
+        for table, fields in [
+            ("audit_log", ["user_id"]),
+            ("event_comments", ["user_id", "created_by", "updated_by", "created_at", "updated_at"]),
+            ("event_images", ["uploaded_by"]),
+            ("event_recurrence", ["created_by", "updated_by", "created_at", "updated_at"]),
+            ("event_recurrence_exceptions", ["created_by", "updated_by", "created_at", "updated_at"]),
+            ("post_comments", ["user_id", "created_by", "updated_by", "created_at", "updated_at"]),
+            ("post_images", ["uploaded_by"]),
+            ("roles", ["created_by", "updated_by", "created_at", "updated_at"]),
+            ("permissions", ["created_by", "updated_by", "created_at", "updated_at"]),
+            ("events", ["created_by", "updated_by", "created_at", "updated_at"]),
+            ("posts", ["created_by", "updated_by", "created_at", "updated_at"]),
+        ]:
+            for field in fields:
+                if field in ("created_by", "updated_by"):
+                    # Update the user reference
+                    cur.execute(
+                        f"UPDATE {table} SET {field} = %s WHERE {field} = %s",
+                        (os.environ.get("DELETED_USER_ID"), user_id)
+                    )
+                    # Also update the timestamp for these rows
+                    timestamp_field = "updated_at" if field == "updated_by" else "created_at"
+                    if timestamp_field in fields:
+                        cur.execute(
+                            f"UPDATE {table} SET {timestamp_field} = %s WHERE {field} = %s",
+                            (now, user_id)
+                        )
+                elif field in ("user_id", "uploaded_by"):
+                    cur.execute(
+                        f"UPDATE {table} SET {field} = %s WHERE {field} = %s",
+                        (os.environ.get("DELETED_USER_ID"), user_id)
+                    )
+
+        # 3. Delete the user
+        cur.execute("DELETE FROM users WHERE id = %s RETURNING username", (user_id,))
+        row = cur.fetchone()
+        username = row['username']
+        conn.commit()
+        flash(f"Gebruiker {username} succesvol verwijderd.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij verwijderen gebruiker: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for("manage_users"))
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: DEACTIVATE USER
+# ════════════════════════════════════════════════
+
+@app.route("/gebruiker-deactiveren/<int:user_id>", methods=["POST"], endpoint="deactivate_user")
+def deactivate_user(user_id):
+    updated_by = current_user.id if current_user.is_authenticated else None
+    updated_at = datetime.now(timezone.utc)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE users SET is_active = %s, updated_by = %s, updated_at = %s WHERE id = %s RETURNING username", (False, updated_by, updated_at, user_id))
+        row = cur.fetchone()
+        conn.commit()
+        username = row["username"] if row and "username" in row else ""
+        flash(f"Gebruiker {username} succesvol gedeactiveerd.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij deactiveren gebruiker: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for("manage_users"))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ACTIVATE USER
+# ════════════════════════════════════════════════
+
+@app.route("/gebruiker-activeren/<int:user_id>", methods=["POST"], endpoint="activate_user")
+def activate_user(user_id):
+    updated_by = current_user.id if current_user.is_authenticated else None
+    updated_at = datetime.now(timezone.utc)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE users SET is_active = %s, updated_by = %s, updated_at = %s WHERE id = %s RETURNING username", (True, updated_by, updated_at, user_id))
+        row = cur.fetchone()
+        conn.commit()
+        username = row["username"] if row and "username" in row else ""
+        flash(f"Gebruiker {username} succesvol geactiveerd.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij deactiveren gebruiker: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for("manage_users"))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: MANAGE USERS
+# ════════════════════════════════════════════════
+
+@app.route("/gebruikers-beheren", methods=["GET", "POST"], endpoint="manage_users")
+def manage_users():
+    ''' Manage all users in database '''
+
+    DELETED_USER_ID = int(os.environ.get("DELETED_USER_ID", 0))
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute('''
+            SELECT id, username, email, function, about_me, is_active, first_name, last_name, require_password_change
+            FROM users
+            WHERE id != %s
+            ORDER BY updated_at DESC
+        ''', (DELETED_USER_ID,))
+        users = cur.fetchall()
+
+        # Add status to each user
+        for user in users:
+            if not user["is_active"]:
+                user["status"] = 'inactief'
+            elif user["is_active"] and user["require_password_change"]:
+                user["status"] = 'wachtwoord reset'
+            elif user["is_active"] and not user["require_password_change"]:
+                user["status"] = 'actief'
+            else:
+                user["status"] = 'probleem'
+
+        # Fetch all user-role mappings in one query
+        cur.execute("""
+            SELECT urm.user_id, r.name as role_name
+            FROM user_role_map urm
+            JOIN roles r ON r.id = urm.role_id
+        """)
+        user_roles = cur.fetchall()
+        # Group roles by user_id
+        roles_by_user = {}
+        for row in user_roles:
+            roles_by_user.setdefault(row["user_id"], []).append(row["role_name"])
+        # Attach roles to each user
+        for user in users:
+            user["roles"] = roles_by_user.get(user["id"], [])
+
+        # Group users by status
+        grouped_users = defaultdict(list)
+        for user in users:
+            grouped_users[user["status"].capitalize()].append(user)
+
+        # Define desired order
+        status_order = ["Actief", "Wachtwoord reset"]
+
+        # Create an ordered dict with your preferred order first
+        ordered_grouped_users = OrderedDict()
+        for status in status_order:
+            if status in grouped_users:
+                ordered_grouped_users[status] = grouped_users.pop(status)
+        # Add any remaining statuses
+        for status, group in grouped_users.items():
+            ordered_grouped_users[status] = group
+
+        # Pass ordered_grouped_users to the template
+        return render_template("admin/manage_users.html", grouped_users=ordered_grouped_users)
     finally:
         if 'cur' in locals() and cur:
             cur.close()

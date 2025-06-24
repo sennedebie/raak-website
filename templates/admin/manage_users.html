@@ -1,0 +1,106 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/manage_users.css') }}"
+/>
+{% endblock %} {% block title %}Gebruikers beheren{% endblock %} {% block
+content %}
+
+<div class="table-tile">
+  <h1>Gebruikers beheren</h1>
+
+  {% for status, users_in_group in grouped_users.items() %}
+  <h2
+    class="group-header{% if status|lower == 'actief' %} header-active{% elif status|lower == 'inactief' %} header-inactive{% elif status|lower == 'wachtwoord reset' %} header-password-reset{% endif %}"
+  >
+    {{ status|capitalize }}
+  </h2>
+  <table>
+    <!-- table header -->
+    <tr>
+      <th>Gebruiker</th>
+      <th>Achternaam</th>
+      <th>Voornaam</th>
+      <th>Rollen</th>
+      <th>Status</th>
+      <th>Acties</th>
+    </tr>
+    {% for user in users_in_group %}
+    <!-- table row as before -->
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>{{ user.last_name }}</td>
+      <td>{{ user.first_name }}</td>
+      <td>{{ user.roles | join(', ') | capitalize }}</td>
+      <td>{{ user.status | capitalize }}</td>
+      <td>
+        <!-- Edit -->
+        <form action="#" method="get" style="display: inline">
+          <button type="submit" title="Bewerken" class="icon-btn">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+        </form>
+        <!-- Roles -->
+        <form action="#" method="get" style="display: inline">
+          <button type="submit" title="Rollen beheren" class="icon-btn">
+            <i class="fa-solid fa-user-gear"></i>
+          </button>
+        </form>
+
+        <form
+          action="#"
+          method="post"
+          style="display: inline"
+          onsubmit="return confirm('Wachtwoord resetten voor deze gebruiker?');"
+        >
+          <button type="submit" title="Wachtwoord resetten" class="icon-btn">
+            <i class="fa-solid fa-key"></i>
+          </button>
+        </form>
+        <!-- Inactivate (if active) -->
+        {% if user.is_active %}
+        <form
+          action="{{ url_for('deactivate_user', user_id=user.id) }}"
+          method="post"
+          style="display: inline"
+          onsubmit="return confirm('Gebruiker {{ user.username }} deactiveren?');"
+        >
+          <button type="submit" title="Deactiveren" class="icon-btn">
+            <i class="fa-solid fa-user-slash"></i>
+          </button>
+        </form>
+        {% else %}
+        <!-- Activate (if not active) -->
+        <form
+          action="{{ url_for('activate_user', user_id=user.id) }}"
+          method="post"
+          style="display: inline"
+          onsubmit="return confirm('Gebruiker {{ user.username }} activeren?');"
+        >
+          <button type="submit" title="Activeren" class="icon-btn">
+            <i class="fa-solid fa-user-check"></i>
+          </button>
+        </form>
+        {% endif %}
+        <!-- Delete (only if not active) -->
+        {% if not user.is_active %}
+        <form
+          action="{{ url_for('delete_user', user_id=user.id) }}"
+          method="post"
+          style="display: inline"
+          onsubmit="return confirm('Ben je zeker dat je gebruiker {{ user.username }} definitief wilt verwijderen?');"
+        >
+          <button type="submit" title="Verwijderen" class="icon-btn">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endfor %}
+</div>
+
+{% endblock%}

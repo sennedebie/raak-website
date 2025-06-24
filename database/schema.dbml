@@ -1,0 +1,180 @@
+Table audit_log {
+  id integer NOT NULL
+  user_id integer
+  action character varying NOT NULL
+  table_name character varying NOT NULL
+  record_id integer NOT NULL
+  change_summary text
+  created_at timestamp without time zone DEFAULT now()
+}
+
+Table event_action_types {
+  id integer NOT NULL
+  name character varying NOT NULL
+  description character varying
+}
+
+Table event_comments {
+  id integer NOT NULL
+  event_id integer NOT NULL
+  user_id integer NOT NULL
+  content text NOT NULL
+  is_approved boolean DEFAULT false
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+}
+
+Table event_images {
+  id integer NOT NULL
+  url text NOT NULL
+  event_id integer NOT NULL
+  uploaded_by integer
+  uploaded_at timestamp without time zone DEFAULT now()
+}
+
+Table event_recurrence {
+  id integer NOT NULL
+  event_id integer NOT NULL
+  start_date date NOT NULL
+  end_date date
+  repeat_type character varying NOT NULL
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+}
+
+Table event_recurrence_exceptions {
+  id integer NOT NULL
+  recurrence_id integer NOT NULL
+  original_date date NOT NULL
+  is_skipped boolean DEFAULT false
+  new_date date
+  new_location character varying
+  note text
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+}
+
+Table events {
+  id integer NOT NULL
+  title character varying NOT NULL
+  subtitle character varying
+  description text
+  event_date timestamp without time zone NOT NULL
+  location character varying
+  visibility character varying NOT NULL
+  is_deleted boolean DEFAULT false
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+  is_published boolean
+  action_type_id integer
+}
+
+Table permissions {
+  id integer NOT NULL
+  name character varying NOT NULL
+  description character varying
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+}
+
+Table post_comments {
+  id integer NOT NULL
+  post_id integer NOT NULL
+  user_id integer NOT NULL
+  content text NOT NULL
+  is_approved boolean DEFAULT false
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+}
+
+Table post_images {
+  id integer NOT NULL
+  url text NOT NULL
+  post_id integer NOT NULL
+  uploaded_by integer
+  uploaded_at timestamp without time zone DEFAULT now()
+  is_main boolean DEFAULT false NOT NULL
+}
+
+Table posts {
+  id integer NOT NULL
+  title character varying NOT NULL
+  slug character varying
+  content text NOT NULL
+  is_published boolean DEFAULT false
+  visibility character varying NOT NULL
+  is_deleted boolean DEFAULT false
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+  is_pinned boolean DEFAULT false
+}
+
+Table role_permission_map {
+  role_id integer NOT NULL
+  permission_id integer NOT NULL
+}
+
+Table roles {
+  id integer NOT NULL
+  name character varying NOT NULL
+  description character varying
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+}
+
+Table tag_map {
+  tag_id integer NOT NULL
+  entity_type character varying NOT NULL
+  entity_id integer NOT NULL
+}
+
+Table tags {
+  id integer NOT NULL
+  name character varying NOT NULL
+}
+
+Table user_images {
+  id integer NOT NULL
+  user_id integer NOT NULL
+  url text NOT NULL
+  is_profile_picture boolean DEFAULT true
+  uploaded_at timestamp without time zone DEFAULT now()
+}
+
+Table user_role_map {
+  user_id integer NOT NULL
+  role_id integer NOT NULL
+}
+
+Table users {
+  id integer NOT NULL
+  username character varying NOT NULL
+  email character varying
+  password_hash character varying NOT NULL
+  function character varying
+  about_me character varying
+  is_active boolean DEFAULT true
+  created_at timestamp without time zone DEFAULT now()
+  updated_at timestamp without time zone
+  created_by integer
+  updated_by integer
+  first_name character varying
+  last_name character varying
+  require_password_change boolean DEFAULT true NOT NULL
+}
