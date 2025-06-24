@@ -24,7 +24,8 @@ from collections import defaultdict, OrderedDict
 # Load environment variables from .env file (for development deployment only)
 load_dotenv()
 
-
+DELETED_USER_ID = int(os.environ.get("DELETED_USER_ID"))
+SUPER_USER_ID = int(os.environ.get("SUPER_USER_ID"))       
 
 # ════════════════════════════════════════════════
 # ▶ INITIATE FLASK APP
@@ -105,7 +106,11 @@ class User(UserMixin):
 
         finally:
             if 'cur' in locals() and cur:
-                cur.close()
+                if 'cur' in locals() and cur:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
             if 'conn' in locals() and conn:
                 conn.close()
 
@@ -651,51 +656,55 @@ def delete_user(user_id):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # 1. Delete mapping and image records
-        cur.execute("DELETE FROM user_role_map WHERE user_id = %s", (user_id,))
-        cur.execute("DELETE FROM user_images WHERE user_id = %s", (user_id,))
+        # User can not delete its own account
+        if int(user_id) == int(current_user.id):
+            flash("Gebruiker kan eigen account niet verwijderen.", "warning")
+        else:
+            # 1. Delete mapping and image records
+            cur.execute("DELETE FROM user_role_map WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM user_images WHERE user_id = %s", (user_id,))
 
-        # 2. Update references to deleted_user or timestamp
-        now = datetime.now(timezone.utc)
-        for table, fields in [
-            ("audit_log", ["user_id"]),
-            ("event_comments", ["user_id", "created_by", "updated_by", "created_at", "updated_at"]),
-            ("event_images", ["uploaded_by"]),
-            ("event_recurrence", ["created_by", "updated_by", "created_at", "updated_at"]),
-            ("event_recurrence_exceptions", ["created_by", "updated_by", "created_at", "updated_at"]),
-            ("post_comments", ["user_id", "created_by", "updated_by", "created_at", "updated_at"]),
-            ("post_images", ["uploaded_by"]),
-            ("roles", ["created_by", "updated_by", "created_at", "updated_at"]),
-            ("permissions", ["created_by", "updated_by", "created_at", "updated_at"]),
-            ("events", ["created_by", "updated_by", "created_at", "updated_at"]),
-            ("posts", ["created_by", "updated_by", "created_at", "updated_at"]),
-        ]:
-            for field in fields:
-                if field in ("created_by", "updated_by"):
-                    # Update the user reference
-                    cur.execute(
-                        f"UPDATE {table} SET {field} = %s WHERE {field} = %s",
-                        (os.environ.get("DELETED_USER_ID"), user_id)
-                    )
-                    # Also update the timestamp for these rows
-                    timestamp_field = "updated_at" if field == "updated_by" else "created_at"
-                    if timestamp_field in fields:
+            # 2. Update references to deleted_user or timestamp
+            now = datetime.now(timezone.utc)
+            for table, fields in [
+                ("audit_log", ["user_id"]),
+                ("event_comments", ["user_id", "created_by", "updated_by", "created_at", "updated_at"]),
+                ("event_images", ["uploaded_by"]),
+                ("event_recurrence", ["created_by", "updated_by", "created_at", "updated_at"]),
+                ("event_recurrence_exceptions", ["created_by", "updated_by", "created_at", "updated_at"]),
+                ("post_comments", ["user_id", "created_by", "updated_by", "created_at", "updated_at"]),
+                ("post_images", ["uploaded_by"]),
+                ("roles", ["created_by", "updated_by", "created_at", "updated_at"]),
+                ("permissions", ["created_by", "updated_by", "created_at", "updated_at"]),
+                ("events", ["created_by", "updated_by", "created_at", "updated_at"]),
+                ("posts", ["created_by", "updated_by", "created_at", "updated_at"]),
+            ]:
+                for field in fields:
+                    if field in ("created_by", "updated_by"):
+                        # Update the user reference
                         cur.execute(
-                            f"UPDATE {table} SET {timestamp_field} = %s WHERE {field} = %s",
-                            (now, user_id)
+                            f"UPDATE {table} SET {field} = %s WHERE {field} = %s",
+                            (int(os.environ.get("DELETED_USER_ID")), user_id)
                         )
-                elif field in ("user_id", "uploaded_by"):
-                    cur.execute(
-                        f"UPDATE {table} SET {field} = %s WHERE {field} = %s",
-                        (os.environ.get("DELETED_USER_ID"), user_id)
-                    )
+                        # Also update the timestamp for these rows
+                        timestamp_field = "updated_at" if field == "updated_by" else "created_at"
+                        if timestamp_field in fields:
+                            cur.execute(
+                                f"UPDATE {table} SET {timestamp_field} = %s WHERE {field} = %s",
+                                (now, user_id)
+                            )
+                    elif field in ("user_id", "uploaded_by"):
+                        cur.execute(
+                            f"UPDATE {table} SET {field} = %s WHERE {field} = %s",
+                            (os.environ.get("DELETED_USER_ID"), user_id)
+                        )
 
-        # 3. Delete the user
-        cur.execute("DELETE FROM users WHERE id = %s RETURNING username", (user_id,))
-        row = cur.fetchone()
-        username = row['username']
-        conn.commit()
-        flash(f"Gebruiker {username} succesvol verwijderd.", "success")
+            # 3. Delete the user
+            cur.execute("DELETE FROM users WHERE id = %s RETURNING username", (user_id,))
+            row = cur.fetchone()
+            username = row['username']
+            conn.commit()
+            flash(f"Gebruiker {username} succesvol verwijderd.", "success")
     except Exception as e:
         conn.rollback()
         flash(f"Fout bij verwijderen gebruiker: {e}", "danger")
@@ -715,11 +724,14 @@ def deactivate_user(user_id):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("UPDATE users SET is_active = %s, updated_by = %s, updated_at = %s WHERE id = %s RETURNING username", (False, updated_by, updated_at, user_id))
-        row = cur.fetchone()
-        conn.commit()
-        username = row["username"] if row and "username" in row else ""
-        flash(f"Gebruiker {username} succesvol gedeactiveerd.", "success")
+        if user_id == int(current_user.id):
+            flash("Gebruiker kan eigen account niet deactiveren", "warning")
+        else:
+            cur.execute("UPDATE users SET is_active = %s, updated_by = %s, updated_at = %s WHERE id = %s RETURNING username", (False, updated_by, updated_at, user_id))
+            row = cur.fetchone()
+            conn.commit()
+            username = row["username"] if row and "username" in row else ""
+            flash(f"Gebruiker {username} succesvol gedeactiveerd.", "success")
     except Exception as e:
         conn.rollback()
         flash(f"Fout bij deactiveren gebruiker: {e}", "danger")
@@ -763,6 +775,8 @@ def manage_users():
     ''' Manage all users in database '''
 
     DELETED_USER_ID = int(os.environ.get("DELETED_USER_ID", 0))
+    SUPER_USER_ID = int(os.environ.get("SUPER_USER_ID", 1))  # Or whatever your super user id is
+    current_user_id = current_user.id
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -818,7 +832,7 @@ def manage_users():
             ordered_grouped_users[status] = group
 
         # Pass ordered_grouped_users to the template
-        return render_template("admin/manage_users.html", grouped_users=ordered_grouped_users)
+        return render_template("admin/manage_users.html", grouped_users=ordered_grouped_users, super_user_id=SUPER_USER_ID, current_user_id=current_user_id)
     finally:
         if 'cur' in locals() and cur:
             cur.close()
