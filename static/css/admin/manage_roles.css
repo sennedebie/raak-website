@@ -132,3 +132,21 @@ td a:hover i {
   cursor: pointer;
 }
 .close:hover { color: #ee3a37; }
+
+.centered-cell {
+  text-align: center;
+}
+
+.inline-header {
+  display: inline;
+}
+
+.empty-row {
+  text-align: center;
+  color: #888;
+}
+
+table.overview th {
+  padding-left: 12px;
+  padding-right: 12px;
+}

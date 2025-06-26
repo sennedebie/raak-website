@@ -1092,7 +1092,7 @@ def manage_permissions():
         return render_template(
             "admin/manage_permissions.html",
             roles=roles,
-            users_by_role=permissions_by_role,
+            permissions_by_role=permissions_by_role,
             all_users=all_permissions)
     finally:
         cur.close()

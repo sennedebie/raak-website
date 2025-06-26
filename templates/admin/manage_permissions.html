@@ -17,43 +17,33 @@
         <h2 style="display: inline">{{ role.name|capitalize }}</h2>
       </div>
       <div class="role-actions">
-        <form action="#" method="get" style="display: inline">
-          <button
-            type="button"
-            class="icon-btn"
-            title="Gebruiker toevoegen aan rol"
-            onclick="openModal('{{ role.id }}')"
-          >
-            <i class="fa-solid fa-user-plus"></i> Gebruiker toevoegen
-          </button>
-        </form>
+        <!-- Add permission modal/button can go here if needed -->
       </div>
     </div>
     <table>
       <tr>
-        <th>Gebruiker</th>
+        <th>Recht</th>
         <th>Toegewezen op</th>
         <th>Toegewezen door</th>
         <th>Acties</th>
       </tr>
-      {% set users = users_by_role.get(role.id, []) %} {% if users %} {% for
-      user in users %}
+      {% set permissions = permissions_by_role.get(role.id, []) %} {% if
+      permissions %} {% for perm in permissions %}
       <tr>
-        <td>{{ user.username }}</td>
+        <td>{{ perm.name }}</td>
         <td>
-          {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else
+          {{ perm.created_at.strftime('%Y-%m-%d %H:%M') if perm.created_at else
           '' }}
         </td>
-        <td>{{ user.created_by_username }}</td>
-
+        <td>{{ perm.created_by_username or '' }}</td>
         <td>
           <form
             action="#"
             method="post"
             style="display: inline"
-            onsubmit="return confirm('Weet je zeker dat je deze rol wilt intrekken bij deze gebruiker?');"
+            onsubmit="return confirm('Weet je zeker dat je dit recht wilt intrekken bij deze rol?');"
           >
-            <button type="submit" class="icon-btn" title="Rol intrekken">
+            <button type="submit" class="icon-btn" title="Recht intrekken">
               <i class="fa-solid fa-user-minus"></i>
             </button>
           </form>
@@ -61,33 +51,12 @@
       </tr>
       {% endfor %} {% else %}
       <tr>
-        <td colspan="7" style="text-align: center; color: #888">
-          Geen gebruikers met deze rol.
+        <td colspan="4" style="text-align: center; color: #888">
+          Geen rechten aan deze rol gekoppeld.
         </td>
       </tr>
       {% endif %}
     </table>
-  </div>
-
-  <!-- Modal for adding user to role -->
-  <div id="addUserModal-{{ role.id }}" class="modal" style="display: none">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal('{{ role.id }}')">&times;</span>
-      <h3>Gebruiker toevoegen aan rol: {{ role.name|capitalize }}</h3>
-      <form action="#" method="post">
-        <label for="user_id_{{ role.id }}">Selecteer gebruiker:</label>
-        <select name="user_id" id="user_id_{{ role.id }}">
-          {% for user in all_users %}
-          <option value="{{ user.id }}">
-            {{ user.username }} ({{ user.first_name }} {{ user.last_name }})
-          </option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="icon-btn">
-          <i class="fa-solid fa-user-plus"></i> Toevoegen
-        </button>
-      </form>
-    </div>
   </div>
   {% endfor %}
 </div>
