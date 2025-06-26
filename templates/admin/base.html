@@ -114,7 +114,7 @@
                   ></i>
                 </a>
                 {% else %}
-                <a href="{{ url_for('manage_users')}}">Gebruikers beheren</a>
+                <a href="{{ url_for('manage_users') }}">Gebruikers beheren</a>
                 {% endif %}
               </li>
               <li>
@@ -128,7 +128,7 @@
                   ></i>
                 </a>
                 {% else %}
-                <a href="#">Rollen beheren</a>
+                <a href="{{ url_for('manage_roles') }}">Rollen beheren</a>
                 {% endif %}
               </li>
               <li>
@@ -142,7 +142,9 @@
                   ></i>
                 </a>
                 {% else %}
-                <a href="#">Rechten beheren</a>
+                <a href="{{ url_for('manage_permissions') }}"
+                  >Rechten beheren</a
+                >
                 {% endif %}
               </li>
             </ul>

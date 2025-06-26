@@ -1,0 +1,128 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/manage_roles.css') }}"
+/>
+{% endblock %} {% block title %} Rollen beheren {% endblock %} {% block content
+%}
+
+<div class="table-tile">
+  <h1>Rollen beheren</h1>
+  <h3>Rol-gebruiker toewijzing</h3>
+
+  {% for role in roles %}
+  <div class="role-group">
+    <div class="role-header-container">
+      <div class="role-name">
+        <h2 style="display: inline">{{ role.name|capitalize }}</h2>
+      </div>
+      <div class="role-actions">
+        {% if current_user.is_authenticated and 'super' in current_user.roles %}
+        <form
+          action="{{ url_for('delete_role', role_id=role.id) }}"
+          method="post"
+          style="display: inline"
+          onsubmit="return confirm('Weet je zeker dat je deze rol wilt verwijderen?');"
+        >
+          <button type="submit" class="icon-btn" title="Rol verwijderen">
+            <i class="fa-solid fa-trash"></i> Rol verwijderen
+          </button>
+        </form>
+        {% endif %}
+
+        <form action="#" method="get" style="display: inline">
+          <button
+            type="button"
+            class="icon-btn"
+            title="Gebruiker toevoegen aan rol"
+            onclick="openModal('{{ role.id }}')"
+          >
+            <i class="fa-solid fa-user-plus"></i> Gebruiker toevoegen
+          </button>
+        </form>
+      </div>
+    </div>
+    <table>
+      <tr>
+        <th>Gebruiker</th>
+        <th>Toegewezen op</th>
+        <th>Toegewezen door</th>
+        <th>Acties</th>
+      </tr>
+      {% set users = users_by_role.get(role.id, []) %} {% if users %} {% for
+      user in users %}
+      <tr>
+        <td>{{ user.username }}</td>
+        <td>
+          {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else
+          '' }}
+        </td>
+        <td>{{ user.created_by_username }}</td>
+
+        <td>
+          <form
+            action="{{ url_for('revoke_role', user_id=user.user_id, role_id=role.id) }}"
+            method="post"
+            style="display: inline"
+            onsubmit="return confirm('Weet je zeker dat je deze rol wilt intrekken bij deze gebruiker?');"
+          >
+            <button type="submit" class="icon-btn" title="Rol intrekken">
+              <i class="fa-solid fa-user-minus"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %} {% else %}
+      <tr>
+        <td colspan="7" style="text-align: center; color: #888">
+          Geen gebruikers met deze rol.
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+
+  <!-- Modal for adding user to role -->
+  <div id="addUserModal-{{ role.id }}" class="modal" style="display: none">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('{{ role.id }}')">&times;</span>
+      <h3>Gebruiker toevoegen aan rol: {{ role.name|capitalize }}</h3>
+      <form
+        action="{{ url_for('assign_role', role_id=role.id) }}"
+        method="post"
+      >
+        <label for="user_id_{{ role.id }}">Selecteer gebruiker:</label>
+        <select name="user_id" id="user_id_{{ role.id }}">
+          {% for user in all_users %}
+          <option value="{{ user.id }}">
+            {{ user.username }} ({{ user.first_name }} {{ user.last_name }})
+          </option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="icon-btn">
+          <i class="fa-solid fa-user-plus"></i> Toevoegen
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  function openModal(roleId) {
+    document.getElementById("addUserModal-" + roleId).style.display = "block";
+  }
+  function closeModal(roleId) {
+    document.getElementById("addUserModal-" + roleId).style.display = "none";
+  }
+  // Optional: close modal when clicking outside
+  window.onclick = function (event) {
+    document.querySelectorAll(".modal").forEach(function (modal) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    });
+  };
+</script>
+
+{% endblock %}

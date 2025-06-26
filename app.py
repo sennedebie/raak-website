@@ -627,7 +627,7 @@ def reset_password(user_id):
 
         # Hash password/token before storing in database
         password_hash = generate_password_hash(token, method="pbkdf2:sha256")
-        cur.execute("UPDATE users SET password_hash = %s WHERE id = %s RETURNING username", (password_hash, user_id))
+        cur.execute("UPDATE users SET password_hash = %s, require_password_change = %s WHERE id = %s RETURNING username", (password_hash, True, user_id))
         row = cur.fetchone()
         if row is not None and "username" in row:
             username = row["username"]
@@ -707,7 +707,7 @@ def delete_user(user_id):
             flash(f"Gebruiker {username} succesvol verwijderd.", "success")
     except Exception as e:
         conn.rollback()
-        flash(f"Fout bij verwijderen gebruiker: {e}", "danger")
+        flash(f"Fout bij verwijderen rol: {e}", "danger")
     finally:
         cur.close()
         conn.close()
@@ -774,8 +774,8 @@ def activate_user(user_id):
 def manage_users():
     ''' Manage all users in database '''
 
-    DELETED_USER_ID = int(os.environ.get("DELETED_USER_ID", 0))
-    SUPER_USER_ID = int(os.environ.get("SUPER_USER_ID", 1))  # Or whatever your super user id is
+    DELETED_USER_ID = int(os.environ.get("DELETED_USER_ID"))
+    SUPER_USER_ID = int(os.environ.get("SUPER_USER_ID"))  # Or whatever your super user id is
     current_user_id = current_user.id
     conn = get_db_connection()
     cur = conn.cursor()
@@ -784,7 +784,7 @@ def manage_users():
             SELECT id, username, email, function, about_me, is_active, first_name, last_name, require_password_change
             FROM users
             WHERE id != %s
-            ORDER BY updated_at DESC
+            ORDER BY username
         ''', (DELETED_USER_ID,))
         users = cur.fetchall()
 
@@ -901,6 +901,202 @@ def add_role():
     finally:
         cur.close()
 
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: DELETE ROLE
+# ════════════════════════════════════════════════
+
+@app.route("/rol-verwijderen/<int:role_id>", methods=["GET", "POST"], endpoint="delete_role")
+def delete_role(role_id):
+    ''' Delete role from database'''
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("SELECT user_id FROM user_role_map WHERE role_id = %s", (role_id,))
+        user_role_mappings = cur.fetchall()
+        if user_role_mappings:
+            flash("Rol kan niet verwijderd worden omdat er gebruikers aan gekoppeld zijn.", "danger")
+        else:
+            cur.execute("SELECT permission_id from role_permission_map WHERE role_id = %s", (role_id, ))
+            mappings = cur.fetchall()
+            
+            if mappings:
+                cur.execute("DELETE from role_permission_map WHERE role_id = %s", (role_id,))
+
+            # Delete row from roles
+            cur.execute("DELETE FROM roles WHERE id = %s RETURNING name", (role_id,))
+            row = cur.fetchone()
+            if row and "name" in row:
+                role = row['name']
+                flash(f"Rol {role} succesvol verwijderd.", "success")
+            else:
+                flash("Rol succesvol verwijderd.", "success")
+            conn.commit()
+            return redirect(url_for("manage_roles"))
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij verwijderen rol: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for("manage_roles"))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ASSIGN ROLE TO USER
+# ════════════════════════════════════════════════
+
+@app.route("/rol-toewijzen/<int:role_id>", methods=["POST"], endpoint="assign_role")
+def assign(role_id):
+    user_id = request.form.get("user_id")
+    if not user_id:
+        flash("Geen gebruiker geselecteerd.", "warning")
+        return redirect(url_for("manage_roles"))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Check if user already has this role
+        cur.execute(
+            "SELECT 1 FROM user_role_map WHERE user_id = %s AND role_id = %s",
+            (user_id, role_id)
+        )
+        if cur.fetchone():
+            flash("Gebruiker heeft deze rol al.", "warning")
+        else:
+            now = datetime.now(timezone.utc)
+            cur.execute(
+                "INSERT INTO user_role_map (user_id, role_id, created_at, created_by) VALUES (%s, %s, %s, %s)",
+                (user_id, role_id, now, current_user.id)
+            )
+            conn.commit()
+            flash("Gebruiker succesvol toegevoegd aan rol.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij toevoegen gebruiker aan rol: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for("manage_roles"))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: REVOKE ROLE FROM USER
+# ════════════════════════════════════════════════
+
+@app.route("/rol-intrekken/<int:user_id>/<int:role_id>", methods=["POST"], endpoint="revoke_role")
+def revoke_role(user_id, role_id):
+    """Remove a role from a user."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "DELETE FROM user_role_map WHERE user_id = %s AND role_id = %s",
+            (user_id, role_id)
+        )
+        conn.commit()
+        flash("Rol succesvol ingetrokken bij gebruiker.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij intrekken van rol: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for("manage_roles"))
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: MANAGE ROLES
+# ════════════════════════════════════════════════
+
+@app.route("/rollen-beheren", methods=["GET", "POST"], endpoint="manage_roles")
+def manage_roles():
+    SUPER_USER_ID = int(os.environ.get("SUPER_USER_ID"))
+    DELETED_USER_ID = int(os.environ.get("DELETED_USER_ID"))
+    current_user_id = current_user.id
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Fetch all roles
+        cur.execute("SELECT id, name, description FROM roles ORDER BY name ASC")
+        roles = cur.fetchall()
+
+        # Fetch all user-role mappings with user info
+        cur.execute("""
+            SELECT urm.user_id, urm.role_id, urm.created_at, urm.created_by,
+               u.username, u.first_name, u.last_name,
+               cb.username AS created_by_username
+            FROM user_role_map urm
+            JOIN users u ON u.id = urm.user_id
+            LEFT JOIN users cb ON cb.id = urm.created_by
+        """)
+        user_roles = cur.fetchall()
+
+        # Group users by role_id
+        users_by_role = {}
+        for row in user_roles:
+            users_by_role.setdefault(row["role_id"], []).append(row)
+
+        # Fetch all users for the dropdown
+        cur.execute("SELECT id, username, first_name, last_name FROM users WHERE id != %s AND id != %s ORDER BY username", (DELETED_USER_ID, SUPER_USER_ID))
+        all_users = cur.fetchall()
+
+        return render_template(
+            "admin/manage_roles.html",
+            roles=roles,
+            users_by_role=users_by_role,
+            all_users=all_users,
+            super_user_id=SUPER_USER_ID,
+            deleted_user_id=DELETED_USER_ID,
+            current_user_id=current_user_id
+        )
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: MANAGE PERMISSIONS
+# ════════════════════════════════════════════════
+
+@app.route("/rechten-beheren", methods=["GET", "POST"], endpoint="manage_permissions")
+def manage_permissions():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Fetch all roles
+        cur.execute("SELECT id, name, description FROM roles ORDER BY name ASC")
+        roles = cur.fetchall()
+
+        # Fetch all role-permissions mappings with user info
+        cur.execute("""
+
+            SELECT rpm.role_id, rpm.permission_id, rpm.created_by, rpm.created_at, cb.username AS created_by_username,
+                   p.name, p.created_by AS permission_created_by, p.created_at AS permission_created_at
+            FROM role_permission_map rpm
+            JOIN permissions p ON p.id = rpm.permission_id
+            LEFT JOIN users cb ON cb.id = rpm.created_by
+        """)
+        role_permissions = cur.fetchall()
+
+        # Group permissions by role_id
+        permissions_by_role = {}
+        for row in role_permissions:
+            permissions_by_role.setdefault(row["role_id"], []).append(row)
+
+        # Fetch all permissions for the dropdown
+        cur.execute("SELECT name FROM permissions")
+        all_permissions = cur.fetchall()
+
+        return render_template(
+            "admin/manage_permissions.html",
+            roles=roles,
+            users_by_role=permissions_by_role,
+            all_users=all_permissions)
+    finally:
+        cur.close()
+        conn.close()
 
 # ════════════════════════════════════════════════
 # ▶ ADMIN: ADD NEW PERMISSION
