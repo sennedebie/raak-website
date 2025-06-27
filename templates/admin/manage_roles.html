@@ -7,6 +7,68 @@
 %}
 
 <div class="table-tile">
+  <h1>Rollen beheren</h1>
+  <div class="header-container">
+    <div class="role-name"></div>
+    <div class="role-actions">
+      <form
+        action="{{ url_for('add_role') }}"
+        method="get"
+        style="display: inline"
+      >
+        <button type="submit" class="icon-btn" title="Rol toevoegen">
+          <i class="fa-solid fa-shield"></i> Rol toevoegen
+        </button>
+      </form>
+    </div>
+  </div>
+  <table>
+    <tr>
+      <th>Rol</th>
+      <th>Beschrijving</th>
+      <th>Gemaakt op</th>
+      <th>Gemaakt door</th>
+      <th>Acties</th>
+    </tr>
+    {% if roles %} {% for role in roles %}
+    <tr>
+      <td>{{ role.name|capitalize }}</td>
+
+      <td class="role-description">{{ role.description }}</td>
+
+      <td>
+        {{ role.created_at.strftime('%Y-%m-%d %H:%M') if role.created_at else ''
+        }}
+      </td>
+      <td>{{ role.created_by_username }}</td>
+
+      <td>
+        <form action="#" method="post" style="display: inline">
+          <button type="submit" class="icon-btn" title="Rol bewerken">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+        </form>
+        <form
+          action="{{ url_for('delete_role', role_id=role.id) }}"
+          method="post"
+          style="display: inline"
+          onsubmit="return confirm('Ben je zeker dat je de rol {{ role.name }} wil verwijderen?');"
+        >
+          <button type="submit" class="icon-btn" title="Rol verwijderen">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %} {% else %}
+    <tr>
+      <td colspan="7" class="empty-row">Er zijn geen rollen gedefinieerd</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+<div class="table-tile">
   <h1>Overzichtstabel</h1>
 
   <table class="overview">
@@ -32,29 +94,14 @@
 </div>
 
 <div class="table-tile">
-  <h1>Rollen beheren</h1>
-  <h3>Rol-gebruiker toewijzing</h3>
-
+  <h1>Roltoewijzing</h1>
   {% for role in roles %}
   <div class="role-group">
-    <div class="role-header-container">
+    <div class="header-container">
       <div class="role-name">
         <h2 class="inline-header">{{ role.name|capitalize }}</h2>
       </div>
       <div class="role-actions">
-        {% if current_user.is_authenticated and 'super' in current_user.roles %}
-        <form
-          action="{{ url_for('delete_role', role_id=role.id) }}"
-          method="post"
-          style="display: inline"
-          onsubmit="return confirm('Weet je zeker dat je deze rol wilt verwijderen?');"
-        >
-          <button type="submit" class="icon-btn" title="Rol verwijderen">
-            <i class="fa-solid fa-trash"></i> Rol verwijderen
-          </button>
-        </form>
-        {% endif %}
-
         <form action="#" method="get" style="display: inline">
           <button
             type="button"
@@ -89,7 +136,7 @@
             action="{{ url_for('revoke_role', user_id=user.user_id, role_id=role.id) }}"
             method="post"
             style="display: inline"
-            onsubmit="return confirm('Weet je zeker dat je deze rol wilt intrekken bij deze gebruiker?');"
+            onsubmit="return confirm('Weet je zeker dat je deze rol wilt intrekken bij gebruiker {{ user.username }} ?');"
           >
             <button type="submit" class="icon-btn" title="Rol intrekken">
               <i class="fa-solid fa-user-minus"></i>

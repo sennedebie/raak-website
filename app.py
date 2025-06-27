@@ -951,6 +951,8 @@ def delete_role(role_id):
 @app.route("/rol-toewijzen/<int:role_id>", methods=["POST"], endpoint="assign_role")
 def assign(role_id):
     user_id = request.form.get("user_id")
+    current_user_id = current_user.id
+
     if not user_id:
         flash("Geen gebruiker geselecteerd.", "warning")
         return redirect(url_for("manage_roles"))
@@ -969,7 +971,7 @@ def assign(role_id):
             now = datetime.now(timezone.utc)
             cur.execute(
                 "INSERT INTO user_role_map (user_id, role_id, created_at, created_by) VALUES (%s, %s, %s, %s)",
-                (user_id, role_id, now, current_user.id)
+                (user_id, role_id, now, current_user_id)
             )
             conn.commit()
             flash("Gebruiker succesvol toegevoegd aan rol.", "success")
@@ -1012,14 +1014,27 @@ def revoke_role(user_id, role_id):
 
 @app.route("/rollen-beheren", methods=["GET", "POST"], endpoint="manage_roles")
 def manage_roles():
-    SUPER_USER_ID = int(os.environ.get("SUPER_USER_ID"))
     DELETED_USER_ID = int(os.environ.get("DELETED_USER_ID"))
     current_user_id = current_user.id
     conn = get_db_connection()
     cur = conn.cursor()
     try:
         # Fetch all roles
-        cur.execute("SELECT id, name, description FROM roles ORDER BY name ASC")
+        cur.execute('''SELECT r.id, r.name, r.description, r.created_at, r.created_by, u.username AS created_by_username
+        FROM roles r
+        LEFT JOIN users u ON u.id = r.created_by
+        ORDER BY 
+            CASE name
+                    WHEN 'super' THEN 1
+                    WHEN 'admin' THEN 2
+                    WHEN 'redacteur' THEN 3
+                    WHEN 'auteur' THEN 4
+                    WHEN 'organisator' THEN 5
+                    WHEN 'planner' THEN 6
+                    ELSE 999
+            END,
+            name ASC
+''')
         roles = cur.fetchall()
 
         # Fetch all user-role mappings with user info
@@ -1039,7 +1054,7 @@ def manage_roles():
             users_by_role.setdefault(row["role_id"], []).append(row)
 
         # Fetch all users for the dropdown
-        cur.execute("SELECT id, username, first_name, last_name FROM users WHERE id != %s AND id != %s ORDER BY username", (DELETED_USER_ID, SUPER_USER_ID))
+        cur.execute("SELECT id, username, first_name, last_name FROM users WHERE id != %s ORDER BY username", (DELETED_USER_ID,))
         all_users = cur.fetchall()
 
         return render_template(
@@ -1047,7 +1062,6 @@ def manage_roles():
             roles=roles,
             users_by_role=users_by_role,
             all_users=all_users,
-            super_user_id=SUPER_USER_ID,
             deleted_user_id=DELETED_USER_ID,
             current_user_id=current_user_id
         )

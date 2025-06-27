@@ -1,5 +1,5 @@
 h1 {
-  margin-bottom: 10px;
+  margin-bottom: 40px;
 }
 
 h3 {
@@ -90,12 +90,21 @@ td a:hover i {
   align-items: center;
 }
 
-.role-header-container {
+.role-group {
+  margin-top: 75px;
+
+}
+.header-container {
   display: flex;
   justify-content: space-between;
   text-align: left;
-
 }
+
+.role-description {
+  font-weight: lighter;
+}
+
+
 @media (max-width: 900px) {
   /* Hide Achternaam (2nd column) and Voornaam (3rd column) */
   table th:nth-child(2),
@@ -149,4 +158,12 @@ td a:hover i {
 table.overview th {
   padding-left: 12px;
   padding-right: 12px;
+  text-align: center;
+
+}
+
+table.overview th:first-child {
+  padding-left: 24px;
+  padding-right: 12px;
+  text-align: left;
 }
