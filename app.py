@@ -714,6 +714,7 @@ def delete_user(user_id):
         conn.close()
     return redirect(url_for("manage_users"))
 
+
 # ════════════════════════════════════════════════
 # ▶ ADMIN: DEACTIVATE USER
 # ════════════════════════════════════════════════
@@ -1300,20 +1301,74 @@ def revoke_permission(role_id, permission_id):
     return redirect(url_for("manage_permissions"))
 
 # ════════════════════════════════════════════════
-# ▶ ADMIN: MANAGE NEWS POSTS
+# ▶ ADMIN: MANAGE POSTS
 # ════════════════════════════════════════════════
 
-@app.route('/author', endpoint="author")
-@role_required('admin', 'author')
-def author():
-    ''' Admin page to manage website content '''
+@app.route('/posts-beheren', endpoint="manage_posts")
+def manage_posts():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM posts ORDER BY created_at DESC')
-    posts = cur.fetchall()
+
+    # Pinned posts
+    cur.execute("""
+        SELECT p.id, p.title, p.content, p.is_published, p.visibility, p.is_deleted, p.created_at, p.updated_at, 
+               p.created_by, p.updated_by, p.is_pinned,
+               u1.username AS created_by_username, u2.username AS updated_by_username
+        FROM posts p
+        LEFT JOIN users u1 ON p.created_by = u1.id
+        LEFT JOIN users u2 ON p.updated_by = u2.id
+        WHERE p.is_published = %s and p.is_deleted = %s and p.is_pinned = %s
+        ORDER BY p.updated_at DESC
+        """, (True, False, True))
+    pinned_posts = cur.fetchall()
+
+    # Published (not pinned) posts
+    cur.execute("""
+        SELECT p.id, p.title, p.content, p.is_published, p.visibility, p.is_deleted, p.created_at, p.updated_at, 
+               p.created_by, p.updated_by, p.is_pinned,
+               u1.username AS created_by_username, u2.username AS updated_by_username
+        FROM posts p
+        LEFT JOIN users u1 ON p.created_by = u1.id
+        LEFT JOIN users u2 ON p.updated_by = u2.id
+        WHERE p.is_published = %s and p.is_deleted = %s and p.is_pinned = %s
+        ORDER BY p.updated_at DESC
+        """, (True, False, False))
+    published_posts = cur.fetchall()
+
+    # Unpublished posts
+    cur.execute("""
+        SELECT p.id, p.title, p.content, p.is_published, p.visibility, p.is_deleted, p.created_at, p.updated_at, 
+               p.created_by, p.updated_by, p.is_pinned,
+               u1.username AS created_by_username, u2.username AS updated_by_username
+        FROM posts p
+        LEFT JOIN users u1 ON p.created_by = u1.id
+        LEFT JOIN users u2 ON p.updated_by = u2.id
+        WHERE p.is_published = %s and p.is_deleted = %s
+        ORDER BY p.updated_at DESC
+        """, (False, False))
+    unpublished_posts = cur.fetchall()
+
+    # Deleted posts
+    cur.execute("""
+        SELECT p.id, p.title, p.content, p.is_published, p.visibility, p.is_deleted, p.created_at, p.updated_at, 
+               p.created_by, p.updated_by, p.is_pinned,
+               u1.username AS created_by_username, u2.username AS updated_by_username
+        FROM posts p
+        LEFT JOIN users u1 ON p.created_by = u1.id
+        LEFT JOIN users u2 ON p.updated_by = u2.id
+        WHERE p.is_deleted = %s
+        ORDER BY p.updated_at DESC
+        """, (True,))
+    deleted_posts = cur.fetchall()
+
     cur.close()
     conn.close()
-    return render_template('author.html', posts=posts)
+    return render_template('admin/manage_posts.html',
+        pinned_posts=pinned_posts,
+        published_posts=published_posts,
+        unpublished_posts=unpublished_posts,
+        deleted_posts=deleted_posts
+    )
 
 
 # ════════════════════════════════════════════════
@@ -1347,7 +1402,7 @@ def add_post():
 
             # Insert new post and return its id
             cur.execute(
-                "INSERT INTO posts (title, content, is_published, visibility, is_deleted, is_pinned, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                "INSERT INTO posts (title, content, is_published, visibility, is_deleted, is_pinned, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
                 (title, content, is_published, visibility, is_deleted, is_pinned, created_by, updated_by, created_at, updated_at)
             )
             post_row = cur.fetchone()
@@ -1427,32 +1482,156 @@ def edit_post(post_id):
 
 
 # ════════════════════════════════════════════════
-# ▶ ADMIN: DELETE NEWS POST
+# ▶ ADMIN: SOFT DELETE POST
 # ════════════════════════════════════════════════
 
-@app.route('/author/delete/<int:post_id>')
-@role_required('admin', 'author')
-def delete_post(post_id):
-    ''' Delete post from database '''
+@app.route('/post-verwijderen/<int:post_id>', methods=["GET", "POST"], endpoint="soft_delete_post")
+def soft_delete_post(post_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM posts WHERE id = %s', (post_id,))
+    cur.execute('SELECT id FROM posts WHERE id = %s AND is_deleted = %s', (post_id, False))
     post = cur.fetchone()
 
-    if post and post['image_filename']:
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], post['image_filename'])
-        if os.path.exists(image_path):
-            os.remove(image_path)
-
-    cur.execute('DELETE FROM posts WHERE id = %s', (post_id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    flash('Bericht en afbeelding verwijderd!', 'info')
-    return redirect(url_for('author'))
+    if post:
+        cur.execute('UPDATE posts SET is_deleted = %s, is_pinned = %s, is_published = %s WHERE id = %s', (True, False, False, post_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Post succesvol verwijderd.', 'success')
+    else:
+        flash('Geen post gevonden met dit ID. Niets verwijderd.', 'warning')
+    return redirect(url_for('manage_posts'))
 
 
+# ════════════════════════════════════════════════
+# ▶ ADMIN: HARD DELETE POST
+# ════════════════════════════════════════════════
+
+@app.route('/post-definitief-verwijderen/<int:post_id>', methods=["GET", "POST"], endpoint="hard_delete_post")
+def hard_delete_post(post_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s', (post_id, True))
+    post = cur.fetchone()
+
+    if post:
+        cur.execute('DELETE FROM posts WHERE id = %s', (post_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Post succesvol verwijderd.', 'success')
+    else:
+        flash('Geen post gevonden met dit ID. Niets verwijderd.', 'warning')
+    return redirect(url_for('manage_posts'))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: RECOVER POST
+# ════════════════════════════════════════════════
+
+@app.route('/post-herstellen/<int:post_id>', methods=["GET", "POST"], endpoint="recover_post")
+def recover_post(post_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s', (post_id, True))
+    post = cur.fetchone()
+
+    if post:
+        cur.execute('UPDATE posts SET is_deleted = %s, is_pinned = %s, is_published = %s WHERE id = %s', (False, False, False, post_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Post succesvol hersteld.', 'success')
+    else:
+        flash('Geen post gevonden met dit ID. Niets hersteld.', 'warning')
+    return redirect(url_for('manage_posts'))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: PUBLISH POST
+# ════════════════════════════════════════════════
+
+@app.route('/post-publiceren/<int:post_id>', methods=["GET", "POST"], endpoint="publish_post")
+def publish_post(post_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s', (post_id, False, False))
+    post = cur.fetchone()
+
+    if post:
+        cur.execute('UPDATE posts SET is_published = %s WHERE id = %s', (True, post_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Post succesvol gepubliceerd.', 'success')
+    else:
+        flash('Geen post gevonden met dit ID. Niets gepubliceerd.', 'warning')
+    return redirect(url_for('manage_posts'))
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: UNPUBLISH POST
+# ════════════════════════════════════════════════
+
+@app.route('/post-publiceren-ongedaan-maken/<int:post_id>', methods=["GET", "POST"], endpoint="unpublish_post")
+def unpublish_post(post_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s', (post_id, False, True))
+    post = cur.fetchone()
+
+    if post:
+        cur.execute('UPDATE posts SET is_published = %s, is_pinned = %s WHERE id = %s', (False, False, post_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Post successvol offline gehaald.', 'success')
+    else:
+        flash('Geen post gevonden met dit ID.', 'warning')
+    return redirect(url_for('manage_posts'))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: PIN POST
+# ════════════════════════════════════════════════
+
+@app.route('/post-vastmaken/<int:post_id>', methods=["GET", "POST"], endpoint="pin_post")
+def pin_post(post_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s and is_pinned = %s', (post_id, False, True, False))
+    post = cur.fetchone()
+
+    if post:
+        cur.execute('UPDATE posts SET is_pinned = %s WHERE id = %s', (True, post_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Post successvol vastgemaakt.', 'success')
+    else:
+        flash('Geen post gevonden met dit ID.', 'warning')
+    return redirect(url_for('manage_posts'))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: UNPIN POST
+# ════════════════════════════════════════════════
+
+@app.route('/post-losmaken/<int:post_id>', methods=["GET", "POST"], endpoint="unpin_post")
+def unpin_post(post_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s and is_pinned = %s', (post_id, False, True, True))
+    post = cur.fetchone()
+
+    if post:
+        cur.execute('UPDATE posts SET is_pinned = %s WHERE id = %s', (False, post_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Post successvol losgemaakt.', 'success')
+    else:
+        flash('Geen post gevonden met dit ID.', 'warning')
+    return redirect(url_for('manage_posts'))
 
 
 # ════════════════════════════════════════════════

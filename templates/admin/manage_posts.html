@@ -1,0 +1,241 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/manage_posts.css') }}"
+/>
+{% endblock %} {% block title %} Posts beheren {% endblock %} {% block content
+%}
+
+<div class="table-tile">
+  <h1>Posts beheren</h1>
+  <a href="{{ url_for('add_post') }}" class="add-btn">
+    <i class="fa-solid fa-plus"></i> Post toevoegen
+  </a>
+  <!-- Pinned Posts -->
+  <h2 class="group-header header-pinned">Vastgemaakt</h2>
+  <table>
+    <tr>
+      <th>Titel</th>
+      <th>Aangemaakt op</th>
+      <th>Aangemaakt door</th>
+      <th>Bijgewerkt op</th>
+      <th>Bijgewerkt door</th>
+      <th>Acties</th>
+    </tr>
+    {% for post in pinned_posts %}
+    <tr>
+      <td>{{ post.title if post.title else "(geen titel)" }}</td>
+      <td>
+        {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else ''
+        }}
+      </td>
+      <td>{{ post.created_by_username }}</td>
+      <td>
+        {{ post.updated_at.strftime('%Y-%m-%d %H:%M') if post.updated_at else ''
+        }}
+      </td>
+      <td>{{ post.updated_by_username }}</td>
+      <td>
+        <a
+          href="{{ url_for('unpublish_post', post_id=post.id) }}"
+          title="Onpubliceren"
+          ><i class="fa-solid fa-eye-slash"></i
+        ></a>
+        <a href="#" title="Wijzigen"
+          ><i class="fa-solid fa-pen-to-square"></i
+        ></a>
+        <form
+          action="{{ url_for('soft_delete_post', post_id=post.id) }}"
+          method="post"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            class="icon-btn"
+            title="Verwijderen"
+            onclick="return confirm('Weet je zeker dat je deze post wilt verwijderen?');"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+        <a href="{{ url_for('unpin_post', post_id=post.id) }}" title="Losmaken">
+          <i class="fa-solid fa-thumbtack"></i>
+        </a>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6" class="empty-row">Geen vastgemaakte posts.</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <!-- Published Posts -->
+  <h2 class="group-header header-published">Gepubliceerd</h2>
+  <table>
+    <tr>
+      <th>Titel</th>
+      <th>Aangemaakt op</th>
+      <th>Aangemaakt door</th>
+      <th>Bijgewerkt op</th>
+      <th>Bijgewerkt door</th>
+      <th>Acties</th>
+    </tr>
+    {% for post in published_posts %}
+    <tr>
+      <td>{{ post.title if post.title else "(geen titel)" }}</td>
+      <td>
+        {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else ''
+        }}
+      </td>
+      <td>{{ post.created_by_username }}</td>
+      <td>
+        {{ post.updated_at.strftime('%Y-%m-%d %H:%M') if post.updated_at else ''
+        }}
+      </td>
+      <td>{{ post.updated_by_username }}</td>
+      <td>
+        <a
+          href="{{ url_for('unpublish_post', post_id=post.id) }}"
+          title="Onpubliceren"
+          ><i class="fa-solid fa-eye"></i
+        ></a>
+        <a href="#" title="Wijzigen"
+          ><i class="fa-solid fa-pen-to-square"></i
+        ></a>
+        <form
+          action="{{ url_for('soft_delete_post', post_id=post.id) }}"
+          method="post"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            class="icon-btn"
+            title="Verwijderen"
+            onclick="return confirm('Weet je zeker dat je deze post wilt verwijderen?');"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+        <a href="{{ url_for('pin_post', post_id=post.id) }}" title="Vastzetten">
+          <i class="fa-solid fa-thumbtack"></i>
+        </a>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6" class="empty-row">Geen gepubliceerde posts.</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <!-- Unpublished Posts -->
+  <h2 class="group-header header-unpublished">Niet-gepubliceerd</h2>
+  <table>
+    <tr>
+      <th>Titel</th>
+      <th>Aangemaakt op</th>
+      <th>Aangemaakt door</th>
+      <th>Bijgewerkt op</th>
+      <th>Bijgewerkt door</th>
+      <th>Acties</th>
+    </tr>
+    {% for post in unpublished_posts %}
+    <tr>
+      <td>{{ post.title if post.title else "(geen titel)" }}</td>
+      <td>
+        {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else ''
+        }}
+      </td>
+      <td>{{ post.created_by_username }}</td>
+      <td>
+        {{ post.updated_at.strftime('%Y-%m-%d %H:%M') if post.updated_at else ''
+        }}
+      </td>
+      <td>{{ post.updated_by_username }}</td>
+      <td>
+        <a
+          href="{{ url_for('publish_post', post_id=post.id) }}"
+          title="Publiceren"
+          ><i class="fa-solid fa-eye"></i
+        ></a>
+        <a href="#" title="Wijzigen"
+          ><i class="fa-solid fa-pen-to-square"></i
+        ></a>
+        <form
+          action="{{ url_for('soft_delete_post', post_id=post.id) }}"
+          method="post"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            class="icon-btn"
+            title="Verwijderen"
+            onclick="return confirm('Weet je zeker dat je deze post wilt verwijderen?');"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6" class="empty-row">Geen niet-gepubliceerde posts.</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <!-- Deleted Posts -->
+  <h2 class="group-header header-deleted">Verwijderd</h2>
+  <table>
+    <tr>
+      <th>Titel</th>
+      <th>Aangemaakt op</th>
+      <th>Aangemaakt door</th>
+      <th>Bijgewerkt op</th>
+      <th>Bijgewerkt door</th>
+      <th>Acties</th>
+    </tr>
+    {% for post in deleted_posts %}
+    <tr>
+      <td>{{ post.title if post.title else "(geen titel)" }}</td>
+      <td>
+        {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else ''
+        }}
+      </td>
+      <td>{{ post.created_by_username }}</td>
+      <td>
+        {{ post.updated_at.strftime('%Y-%m-%d %H:%M') if post.updated_at else ''
+        }}
+      </td>
+      <td>{{ post.updated_by_username }}</td>
+      <td>
+        <a
+          href="{{ url_for('recover_post', post_id=post.id) }}"
+          title="Herstellen"
+          ><i class="fa-solid fa-rotate-left"></i
+        ></a>
+        <form
+          action="{{ url_for('hard_delete_post', post_id=post.id) }}"
+          method="post"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            class="icon-btn"
+            title="Definitief verwijderen"
+            onclick="return confirm('Weet je zeker dat je deze post definitief wilt verwijderen?');"
+          >
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6" class="empty-row">Geen verwijderde posts.</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
