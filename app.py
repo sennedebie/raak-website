@@ -109,6 +109,7 @@ class User(UserMixin):
                 if 'cur' in locals() and cur:
                     try:
                         cur.close()
+                        conn.close()
                     except Exception:
                         pass
             if 'conn' in locals() and conn:
@@ -949,7 +950,7 @@ def delete_role(role_id):
 # ════════════════════════════════════════════════
 
 @app.route("/rol-toewijzen/<int:role_id>", methods=["POST"], endpoint="assign_role")
-def assign(role_id):
+def assign_role(role_id):
     user_id = request.form.get("user_id")
     current_user_id = current_user.id
 
@@ -1080,34 +1081,54 @@ def manage_permissions():
     cur = conn.cursor()
     try:
         # Fetch all roles
-        cur.execute("SELECT id, name, description FROM roles ORDER BY name ASC")
-        roles = cur.fetchall()
+        cur.execute('''
+            SELECT r.id, r.name, r.description, r.created_at, r.created_by, u.username AS created_by_username
+            FROM roles r
+            LEFT JOIN users u ON u.id = r.created_by
+            ORDER BY 
+                CASE name
+                        WHEN 'super' THEN 1
+                        WHEN 'admin' THEN 2
+                        WHEN 'redacteur' THEN 3
+                        WHEN 'auteur' THEN 4
+                        WHEN 'organisator' THEN 5
+                        WHEN 'planner' THEN 6
+                        ELSE 999
+                END,
+                name ASC
+        ''')
+        all_roles = cur.fetchall()
 
-        # Fetch all role-permissions mappings with user info
+        # Fetch all permissions (with their own creation info)
+        cur.execute('''
+            SELECT p.id, p.name, p.created_at, p.created_by, u.username AS created_by_username
+            FROM permissions p
+            LEFT JOIN users u ON u.id = p.created_by
+            ORDER BY p.name ASC
+        ''')
+        all_permissions = cur.fetchall()
+
+        # Fetch all role-permission mappings (with mapping creation info)
         cur.execute("""
-
-            SELECT rpm.role_id, rpm.permission_id, rpm.created_by, rpm.created_at, cb.username AS created_by_username,
-                   p.name, p.created_by AS permission_created_by, p.created_at AS permission_created_at
+            SELECT rpm.role_id, rpm.permission_id, rpm.created_by, rpm.created_at, u.username AS created_by_username,
+                   p.name
             FROM role_permission_map rpm
             JOIN permissions p ON p.id = rpm.permission_id
-            LEFT JOIN users cb ON cb.id = rpm.created_by
+            LEFT JOIN users u ON u.id = rpm.created_by
         """)
         role_permissions = cur.fetchall()
 
-        # Group permissions by role_id
+        # Group permissions by role_id for fast lookup in tables
         permissions_by_role = {}
         for row in role_permissions:
             permissions_by_role.setdefault(row["role_id"], []).append(row)
 
-        # Fetch all permissions for the dropdown
-        cur.execute("SELECT name FROM permissions")
-        all_permissions = cur.fetchall()
-
         return render_template(
             "admin/manage_permissions.html",
-            roles=roles,
-            permissions_by_role=permissions_by_role,
-            all_users=all_permissions)
+            all_permissions=all_permissions,
+            all_roles=all_roles,
+            permissions_by_role=permissions_by_role
+        )
     finally:
         cur.close()
         conn.close()
@@ -1132,6 +1153,12 @@ def add_permission():
             description = request.form.get("description", "")
             selected_roles = request.form.getlist("roles")
 
+            # Check for uniqueness of permission name
+            cur.execute("SELECT id FROM permissions WHERE name = %s", (name,))
+            if cur.fetchone():
+                flash(f"Recht met naam '{name}' bestaat al.", "warning")
+                return render_template("admin/add_permission.html", roles=all_roles)
+
             # Fetch current user from session (if logged in), else set to None
             created_by = current_user.id if current_user.is_authenticated else None
             updated_by = current_user.id if current_user.is_authenticated else None
@@ -1140,38 +1167,137 @@ def add_permission():
 
             # Insert new permission and return its id
             cur.execute(
-                "INSERT INTO permissions (name, description, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-                (name, description, created_by, updated_by, created_at, updated_at)
+                "INSERT INTO permissions (name, created_by, created_at) VALUES (%s, %s, %s) RETURNING id",
+                (name, created_by, created_at)
             )
             permission_row = cur.fetchone()
             if not permission_row or "id" not in permission_row:
                 raise Exception("Niet mogelijk om recht toe te voegen of id op te halen.")
             permission_id = permission_row["id"]
-
-            conn.commit()
-            flash('Recht toegevoegd aan database.', 'success')
-
-            for role_id in selected_roles:
-                try:
-                    cur.execute("INSERT INTO role_permission_map (role_id, permission_id) VALUES (%s, %s)", (role_id, permission_id))
-                except Exception as insert_exc:
-                    conn.rollback()
-                    flash(f"Fout bij koppelen van recht aan rol (role_id={role_id}): {insert_exc}", "danger")
-                    return redirect(url_for("add_permission"))
-
-
-            conn.commit()
-            flash('Recht gekoppeld aan rol(len).', 'success')
+            try:
+                if selected_roles:
+                    for role_id in selected_roles:
+                        cur.execute("INSERT INTO role_permission_map (role_id, permission_id) VALUES (%s, %s)", (role_id, permission_id))
+                    conn.commit()
+                    flash('Recht toegevoegd aan database en gekoppeld aan rol(len).', 'success')
+                else:
+                    # No roles selected, just commit the permission itself
+                    conn.commit()
+                    flash('Recht toegevoegd aan database, maar niet gekoppeld aan een rol.', 'warning')
+            except Exception as insert_exc:
+                conn.rollback()
+                flash(f"Fout bij koppelen van recht aan rol (role_id={role_id}): {insert_exc}", "danger")
+                return redirect(url_for("add_permission"))
         
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("manage_permissions"))
         return render_template("admin/add_permission.html", roles=all_roles)
 
     except Exception as e:
         conn.rollback()
         flash(f"Er is een fout opgetreden: {e}", "danger")
+        return render_template("admin/add_permission.html", roles=all_roles)
     finally:
         cur.close()
 
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: DELETE PERMISSION
+# ════════════════════════════════════════════════
+
+@app.route("/recht-verwijderen/<int:permission_id>", methods=["GET", "POST"], endpoint="delete_permission")
+def delete_permission(permission_id):
+    ''' Delete permission from database'''
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("SELECT permission_id FROM role_permission_map WHERE permission_id = %s", (permission_id,))
+        role_permission_mappings = cur.fetchall()
+
+        if role_permission_mappings:
+            cur.execute("DELETE FROM role_permission_map WHERE permission_id = %s", (permission_id,))
+            flash("Rol-rechtenkoppelingen verwijderd", "success")
+
+        cur.execute("DELETE FROM permissions WHERE id = %s RETURNING name", (permission_id,))
+        deleted_permission = cur.fetchone()
+        conn.commit()
+        if deleted_permission and deleted_permission.get('name'):
+            flash(f"Recht '{deleted_permission['name']}' succesvol verwijderd.", "success")
+        else:
+            flash("Geen recht gevonden met dit ID. Niets verwijderd.", "warning")
+        return redirect(url_for("manage_permissions"))
+    
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij verwijderen recht: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: ASSIGN PERMISSION TO ROLE
+# ════════════════════════════════════════════════
+
+@app.route("/recht-toewijzen/<int:permission_id>", methods=["POST"], endpoint="assign_permission")
+def assign_permission(permission_id):
+    role_id = request.form.get("role_id")
+    current_user_id = current_user.id
+
+    if not role_id:
+        flash("Geen rol geselecteerd.", "warning")
+        return redirect(url_for("manage_permissions"))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Check if role already has this permission
+        cur.execute(
+            "SELECT 1 FROM role_permission_map WHERE role_id = %s AND permission_id = %s",
+            (role_id, permission_id)
+        )
+        if cur.fetchone():
+            flash("Recht is reeds toegewezen aan deze rol", "warning")
+        else:
+            now = datetime.now(timezone.utc)
+            cur.execute(
+                "INSERT INTO role_permission_map (role_id, permission_id, created_at, created_by) VALUES (%s, %s, %s, %s)",
+                (role_id, permission_id, now, current_user_id))
+            conn.commit()
+            flash("Recht succesvol toegewezen aan rol.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij toewijzen recht aan rol: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for("manage_permissions"))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: REVOKE PERMISSION FROM ROLE
+# ════════════════════════════════════════════════
+
+@app.route("/recht-intrekken/<int:role_id>/<int:permission_id>", methods=["POST"], endpoint="revoke_permission")
+def revoke_permission(role_id, permission_id):
+    """Remove a permission from a role."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "DELETE FROM role_permission_map WHERE role_id = %s AND permission_id = %s",
+            (role_id, permission_id)
+        )
+        conn.commit()
+        flash("Recht succesvol ingetrokken bij rol.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Fout bij intrekken van recht: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for("manage_permissions"))
 
 # ════════════════════════════════════════════════
 # ▶ ADMIN: MANAGE NEWS POSTS

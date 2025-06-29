@@ -369,6 +369,12 @@ table tbody tr:nth-child(odd) {
     border: 1px solid #f5c6cb;
 }
 
+.flash-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
 /* ════════════════════════════════════════════════ */
 /* ▶ RESPONSIVE NAVBAR                              */
 /* ════════════════════════════════════════════════ */

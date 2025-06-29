@@ -15,21 +15,15 @@
       >Naam <span class="required-field">*</span></label
     >
     <input type="text" id="name" name="name" required />
-    <label class="label1" for="description"
-      >Beschrijving <span class="required-field">*</span></label
-    >
-    <input type="text" id="description" name="description" required />
 
-    <label class="label1" for="roles"
-      >Toevoegen aan rol <span class="required-field">*</span></label
-    >
-    <div id="roles" class="checkbox-group" required>
+    <label class="label1" for="roles">Toevoegen aan rol</label>
+    <div id="roles" class="checkbox-group">
       {% for role in roles %}
       <div class="checkbox-item">
         <input
           type="checkbox"
           id="role_{{ role.id }}"
-          name="roles"
+          name="roles[]"
           value="{{ role.id }}"
         />
         <label for="role_{{ role.id }}">{{ role.name|capitalize }}</label>
@@ -45,4 +39,4 @@
   </p>
   <p class="form-text">* Dit is een vereist veld.</p>
 </div>
-{% endblock%}
+{% endblock %}

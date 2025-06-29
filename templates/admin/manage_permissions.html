@@ -1,0 +1,184 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/manage_permissions.css') }}"
+/>
+{% endblock %} {% block title %} Rechten beheren {% endblock %} {% block content
+%}
+
+<div class="table-tile">
+  <h1>Rechten beheren</h1>
+  <div class="header-container">
+    <div class="role-name"></div>
+    <div class="role-actions">
+      <form
+        action="{{ url_for('add_permission') }}"
+        method="get"
+        style="display: inline"
+      >
+        <button type="submit" class="icon-btn" title="Recht toevoegen">
+          <i class="fa-solid fa-shield"></i> Recht toevoegen
+        </button>
+      </form>
+    </div>
+  </div>
+  <table>
+    <tr>
+      <th>Recht</th>
+      <th>Gemaakt op</th>
+      <th>Gemaakt door</th>
+      <th>Acties</th>
+    </tr>
+    {% if all_permissions %} {% for perm in all_permissions %}
+    <tr>
+      <td>{{ perm.name }}</td>
+      <td>
+        {{ perm.created_at.strftime('%Y-%m-%d %H:%M') if perm.created_at else ''
+        }}
+      </td>
+      <td>{{ perm.created_by_username }}</td>
+      <td>
+        <form
+          action="{{ url_for('delete_permission', permission_id=perm.id) }}"
+          method="post"
+          style="display: inline"
+          onsubmit="return confirm('Ben je zeker dat je het recht {{ perm.name }} wil verwijderen?');"
+        >
+          <button type="submit" class="icon-btn" title="Recht verwijderen">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %} {% else %}
+    <tr>
+      <td colspan="7" class="empty-row">Er zijn geen rechten gedefinieerd</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+<div class="table-tile">
+  <h1>Overzichtstabel</h1>
+
+  <table class="overview">
+    <tr>
+      <th>Recht</th>
+      {% for role in all_roles %}
+      <th>{{ role.name|capitalize }}</th>
+      {% endfor %}
+    </tr>
+    {% for perm in all_permissions %}
+    <tr>
+      <td>{{ perm.name }}</td>
+      {% for role in all_roles %}
+      <td class="centered-cell">
+        {% set perms = permissions_by_role.get(role.id, []) %} {% if
+        perms|selectattr('permission_id', 'equalto', perm.id)|list %} &#10004;
+        {% else %}{% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="table-tile">
+  <h1>Rechtentoewijzing</h1>
+  {% for permission in all_permissions %}
+  <div class="role-group">
+    <div class="header-container">
+      <div class="role-name">
+        <h2 class="inline-header">{{ permission.name }}</h2>
+      </div>
+      <div class="role-actions">
+        <button
+          type="button"
+          class="icon-btn"
+          title="Toewijzen aan rol"
+          onclick="openModal('{{ permission.id }}')"
+        >
+          <i class="fa-solid fa-user-plus"></i> Toewijzen aan rol
+        </button>
+      </div>
+    </div>
+    <table>
+      <tr>
+        <th>Rol</th>
+        <th>Toegewezen op</th>
+        <th>Toegewezen door</th>
+        <th>Acties</th>
+      </tr>
+      {% for role in all_roles %} {% set permissions =
+      permissions_by_role.get(role.id, []) %} {% set assigned =
+      permissions|selectattr('permission_id', 'equalto', permission.id)|list %}
+      {% if assigned %}
+      <tr>
+        <td>{{ role.name|capitalize }}</td>
+        <td>
+          {{ assigned[0].created_at.strftime('%Y-%m-%d %H:%M') if
+          assigned[0].created_at else '' }}
+        </td>
+        <td>{{ assigned[0].created_by_username }}</td>
+        <td>
+          <form
+            action="{{ url_for('revoke_permission', permission_id=permission.id, role_id=role.id) }}"
+            method="post"
+            style="display: inline"
+            onsubmit="return confirm('Ben je zeker dat je recht {{ permission.name }} wil intrekken voor deze rol {{ role.name }}?');"
+          >
+            <button type="submit" class="icon-btn" title="Recht intrekken">
+              <i class="fa-solid fa-user-minus"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endif %} {% endfor %}
+    </table>
+
+    <!-- Modal for adding permission to role -->
+    <div id="addPermModal-{{ permission.id }}" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('{{ permission.id }}')"
+          >&times;</span
+        >
+        <h3>Recht toevoegen aan rol: {{ permission.name|capitalize }}</h3>
+        <form
+          action="{{ url_for('assign_permission', permission_id=permission.id) }}"
+          method="post"
+        >
+          <label for="role_id_{{ permission.id }}">Selecteer rol:</label>
+          <select name="role_id" id="role_id_{{ permission.id }}" required>
+            {% for role in all_roles %}
+            <option value="{{ role.id }}">{{ role.name|capitalize }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="icon-btn">
+            <i class="fa-solid fa-user-plus"></i> Toevoegen
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  function openModal(permissionId) {
+    document.getElementById("addPermModal-" + permissionId).style.display =
+      "block";
+  }
+  function closeModal(permissionId) {
+    document.getElementById("addPermModal-" + permissionId).style.display =
+      "none";
+  }
+  window.onclick = function (event) {
+    document.querySelectorAll(".modal").forEach(function (modal) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    });
+  };
+</script>
+
+{% endblock %}

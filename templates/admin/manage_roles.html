@@ -84,7 +84,7 @@
       {% for role in roles %}
       <td class="centered-cell">
         {% set users = users_by_role.get(role.id, []) %} {% if
-        users|selectattr('user_id', 'equalto', user.id)|list %} &#10006; {%
+        users|selectattr('user_id', 'equalto', user.id)|list %} &#10004; {%
         endif %}
       </td>
       {% endfor %}
