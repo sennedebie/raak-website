@@ -41,7 +41,7 @@ content %}
       <div class="image-container"></div>
       <div class="body-container">
         <p class="post-title">{{ post.title }}</p>
-        <p class="post-date">{{ post.created_at.strftime('%d/%m-%Y') }}</p>
+        <p class="post-date">{{ post.published_at.strftime('%d/%m/%Y') }}</p>
         <div class="tags">
           {% if post.tags %} {% for tag in post.tags %}
           <span class="tag">{{ tag }}</span>

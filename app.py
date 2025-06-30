@@ -226,7 +226,7 @@ def index():
     cur = conn.cursor()
     try:
         cur.execute("""
-        SELECT id, title, content, created_at
+        SELECT id, title, content, created_at, published_at
         FROM posts
         WHERE is_pinned = %s and is_published = %s and is_deleted = %s and visibility = %s
         ORDER BY created_at DESC
@@ -1471,15 +1471,13 @@ def edit_post(post_id):
         title = request.form.get("title")
         content = request.form.get("content")
         visibility = request.form.get("visibility", "public")
-        is_pinned = bool(request.form.get("is_pinned"))
-        is_published = bool(request.form.get("is_published"))
         updated_by = current_user.id if current_user.is_authenticated else None
         updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
         selected_tags = request.form.getlist("tags")
 
         cur.execute(
-            "UPDATE posts SET title = %s, content = %s, visibility = %s, is_pinned = %s, is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s",
-            (title, content, visibility, is_pinned, is_published, updated_by, updated_at, post_id)
+            "UPDATE posts SET title = %s, content = %s, visibility = %s, updated_by = %s, updated_at = %s WHERE id = %s",
+            (title, content, visibility, updated_by, updated_at, post_id)
         )
 
         # Update tags: remove old, add new
@@ -1851,7 +1849,6 @@ def edit_event(event_id):
         event_date_str = request.form.get("event_date")
         location = request.form.get("location")
         visibility = request.form.get("visibility", "public")
-        is_published = bool(request.form.get("is_published"))
         updated_by = current_user.id if current_user.is_authenticated else None
         updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
         selected_tags = request.form.getlist("tags")
@@ -1863,8 +1860,8 @@ def edit_event(event_id):
             event_date = None
 
         cur.execute(
-            "UPDATE events SET title = %s, subtitle = %s, description = %s, event_date = %s, location = %s, visibility = %s, is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s",
-            (title, subtitle, description, event_date, location, visibility, is_published, updated_by, updated_at, event_id)
+            "UPDATE events SET title = %s, subtitle = %s, description = %s, event_date = %s, location = %s, visibility = %s, updated_by = %s, updated_at = %s WHERE id = %s",
+            (title, subtitle, description, event_date, location, visibility, updated_by, updated_at, event_id)
         )
 
         # Update tags: remove old, add new
