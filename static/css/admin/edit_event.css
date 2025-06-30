@@ -1,0 +1,59 @@
+h1 {
+    margin-bottom: 30px;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f7f7f7;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+}
+.checkbox-item input[type="checkbox"] {
+    accent-color: #0078d4;
+    width: 18px;
+    height: 18px;
+}
+.checkbox-item label {
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.normal-button {
+    width: 100%;
+}
+
+textarea {
+    color: rgba(0, 0, 0, 0.747);
+    font-weight: normal;
+    min-height: 70vh;
+}
+
+input[type="datetime-local"] {
+  width: 100%;
+  padding: 0.75em 1em;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #f9f9f9;
+  margin-bottom: 1.2em;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+input[type="datetime-local"]:focus {
+  border-color: #0051a4;
+  outline: none;
+  background: #fff;
+}
+
+small {
+    color: #696969;
+}

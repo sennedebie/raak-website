@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/edit_post.css') }}"
+/>
+{% endblock %} {% block title %}Post bewerken{% endblock %} {% block content %}
+
+<div class="form">
+  <form action="{{ url_for('edit_post', post_id=post.id) }}" method="POST">
+    <h1>Post bewerken</h1>
+
+    <label class="label1" for="title"
+      >Titel <span class="required-field">*</span></label
+    >
+    <input
+      type="text"
+      id="title"
+      name="title"
+      value="{{ post.title }}"
+      required
+    />
+
+    <label class="label1" for="content"
+      >Inhoud <span class="required-field">*</span></label
+    >
+    <textarea id="content" name="content" required>{{ post.content }}</textarea>
+
+    <label class="label1" for="tags">Tags toevoegen</label>
+    <div id="tags" class="checkbox-group">
+      {% for tag in tags %}
+      <div class="checkbox-item">
+        <input
+          type="checkbox"
+          id="tag_{{ tag.id }}"
+          name="tags"
+          value="{{ tag.id }}"
+          {%
+          if
+          tag.id
+          in
+          post_tag_ids
+          %}checked{%
+          endif
+          %}
+        />
+        <label for="tag_{{ tag.id }}">{{ tag.name|capitalize }}</label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="normal-button">Opslaan</button>
+  </form>
+  <p class="form-text">
+    Gebruik dit formulier om een bestaande nieuwspost te bewerken. Vergeet niet
+    op te slaan om wijzigingen door te voeren.
+  </p>
+  <p class="form-text">* Dit is een vereist veld.</p>
+</div>
+{% endblock%}

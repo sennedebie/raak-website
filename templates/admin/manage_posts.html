@@ -26,13 +26,15 @@
     <tr>
       <td>{{ post.title if post.title else "(geen titel)" }}</td>
       <td>
-        {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else ''
-        }}
+        {{
+        post.created_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if post.created_at else '' }}
       </td>
       <td>{{ post.created_by_username }}</td>
       <td>
-        {{ post.updated_at.strftime('%Y-%m-%d %H:%M') if post.updated_at else ''
-        }}
+        {{
+        post.updated_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if post.updated_at else '' }}
       </td>
       <td>{{ post.updated_by_username }}</td>
       <td>
@@ -41,7 +43,7 @@
           title="Onpubliceren"
           ><i class="fa-solid fa-eye-slash"></i
         ></a>
-        <a href="#" title="Wijzigen"
+        <a href="{{ url_for('edit_post', post_id=post.id) }}" title="Bewerken"
           ><i class="fa-solid fa-pen-to-square"></i
         ></a>
         <form
@@ -85,22 +87,24 @@
     <tr>
       <td>{{ post.title if post.title else "(geen titel)" }}</td>
       <td>
-        {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else ''
-        }}
+        {{
+        post.created_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if post.created_at else '' }}
       </td>
       <td>{{ post.created_by_username }}</td>
       <td>
-        {{ post.updated_at.strftime('%Y-%m-%d %H:%M') if post.updated_at else ''
-        }}
+        {{
+        post.updated_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if post.updated_at else '' }}
       </td>
       <td>{{ post.updated_by_username }}</td>
       <td>
         <a
           href="{{ url_for('unpublish_post', post_id=post.id) }}"
           title="Onpubliceren"
-          ><i class="fa-solid fa-eye"></i
+          ><i class="fa-solid fa-eye-slash"></i
         ></a>
-        <a href="#" title="Wijzigen"
+        <a href="{{ url_for('edit_post', post_id=post.id) }}" title="Bewerken"
           ><i class="fa-solid fa-pen-to-square"></i
         ></a>
         <form
@@ -144,13 +148,15 @@
     <tr>
       <td>{{ post.title if post.title else "(geen titel)" }}</td>
       <td>
-        {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else ''
-        }}
+        {{
+        post.created_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if post.created_at else '' }}
       </td>
       <td>{{ post.created_by_username }}</td>
       <td>
-        {{ post.updated_at.strftime('%Y-%m-%d %H:%M') if post.updated_at else ''
-        }}
+        {{
+        post.updated_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if post.updated_at else '' }}
       </td>
       <td>{{ post.updated_by_username }}</td>
       <td>
@@ -159,7 +165,7 @@
           title="Publiceren"
           ><i class="fa-solid fa-eye"></i
         ></a>
-        <a href="#" title="Wijzigen"
+        <a href="{{ url_for('edit_post', post_id=post.id) }}" title="Bewerken"
           ><i class="fa-solid fa-pen-to-square"></i
         ></a>
         <form
@@ -200,13 +206,15 @@
     <tr>
       <td>{{ post.title if post.title else "(geen titel)" }}</td>
       <td>
-        {{ post.created_at.strftime('%Y-%m-%d %H:%M') if post.created_at else ''
-        }}
+        {{
+        post.created_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if post.created_at else '' }}
       </td>
       <td>{{ post.created_by_username }}</td>
       <td>
-        {{ post.updated_at.strftime('%Y-%m-%d %H:%M') if post.updated_at else ''
-        }}
+        {{
+        post.updated_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if post.updated_at else '' }}
       </td>
       <td>{{ post.updated_by_username }}</td>
       <td>

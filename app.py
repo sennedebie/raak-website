@@ -14,6 +14,8 @@ from mail import *
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
 from collections import defaultdict, OrderedDict
+from zoneinfo import ZoneInfo
+import zoneinfo
 
 
 
@@ -562,8 +564,9 @@ def add_user():
             # Fetch current user from session (if logged in), else set to None
             created_by = current_user.id if current_user.is_authenticated else None
             updated_by = current_user.id if current_user.is_authenticated else None
-            created_at = datetime.now(timezone.utc)
-            updated_at = datetime.now(timezone.utc)
+            now = datetime.now(ZoneInfo("Europe/Brussels"))
+            created_at = datetime.now(ZoneInfo("Europe/Brussels"))
+            updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
             role_value = request.form.get("role")
             selected_role_id = role_value.lower() if role_value else None
 
@@ -666,7 +669,7 @@ def delete_user(user_id):
             cur.execute("DELETE FROM user_images WHERE user_id = %s", (user_id,))
 
             # 2. Update references to deleted_user or timestamp
-            now = datetime.now(timezone.utc)
+            now = datetime.now(ZoneInfo("Europe/Brussels"))
             for table, fields in [
                 ("audit_log", ["user_id"]),
                 ("event_comments", ["user_id", "created_by", "updated_by", "created_at", "updated_at"]),
@@ -722,7 +725,7 @@ def delete_user(user_id):
 @app.route("/gebruiker-deactiveren/<int:user_id>", methods=["POST"], endpoint="deactivate_user")
 def deactivate_user(user_id):
     updated_by = current_user.id if current_user.is_authenticated else None
-    updated_at = datetime.now(timezone.utc)
+    updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -750,7 +753,7 @@ def deactivate_user(user_id):
 @app.route("/gebruiker-activeren/<int:user_id>", methods=["POST"], endpoint="activate_user")
 def activate_user(user_id):
     updated_by = current_user.id if current_user.is_authenticated else None
-    updated_at = datetime.now(timezone.utc)
+    updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -866,8 +869,9 @@ def add_role():
             # Fetch current user from session (if logged in), else set to None
             created_by = current_user.id if current_user.is_authenticated else None
             updated_by = current_user.id if current_user.is_authenticated else None
-            created_at = datetime.now(timezone.utc)
-            updated_at = datetime.now(timezone.utc)
+            now = datetime.now(ZoneInfo("Europe/Brussels"))
+            created_at = datetime.now(ZoneInfo("Europe/Brussels"))
+            updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
 
             cur.execute(
                 "INSERT INTO roles (name, description, created_by, updated_by, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
@@ -970,7 +974,7 @@ def assign_role(role_id):
         if cur.fetchone():
             flash("Gebruiker heeft deze rol al.", "warning")
         else:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(ZoneInfo("Europe/Brussels"))
             cur.execute(
                 "INSERT INTO user_role_map (user_id, role_id, created_at, created_by) VALUES (%s, %s, %s, %s)",
                 (user_id, role_id, now, current_user_id)
@@ -1065,7 +1069,8 @@ def manage_roles():
             users_by_role=users_by_role,
             all_users=all_users,
             deleted_user_id=DELETED_USER_ID,
-            current_user_id=current_user_id
+            current_user_id=current_user_id,
+            zoneinfo=zoneinfo
         )
     finally:
         cur.close()
@@ -1128,7 +1133,8 @@ def manage_permissions():
             "admin/manage_permissions.html",
             all_permissions=all_permissions,
             all_roles=all_roles,
-            permissions_by_role=permissions_by_role
+            permissions_by_role=permissions_by_role,
+            zoneinfo=zoneinfo
         )
     finally:
         cur.close()
@@ -1163,8 +1169,9 @@ def add_permission():
             # Fetch current user from session (if logged in), else set to None
             created_by = current_user.id if current_user.is_authenticated else None
             updated_by = current_user.id if current_user.is_authenticated else None
-            created_at = datetime.now(timezone.utc)
-            updated_at = datetime.now(timezone.utc)
+            now = datetime.now(ZoneInfo("Europe/Brussels"))
+            created_at = datetime.now(ZoneInfo("Europe/Brussels"))
+            updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
 
             # Insert new permission and return its id
             cur.execute(
@@ -1261,7 +1268,7 @@ def assign_permission(permission_id):
         if cur.fetchone():
             flash("Recht is reeds toegewezen aan deze rol", "warning")
         else:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(ZoneInfo("Europe/Brussels"))
             cur.execute(
                 "INSERT INTO role_permission_map (role_id, permission_id, created_at, created_by) VALUES (%s, %s, %s, %s)",
                 (role_id, permission_id, now, current_user_id))
@@ -1367,7 +1374,8 @@ def manage_posts():
         pinned_posts=pinned_posts,
         published_posts=published_posts,
         unpublished_posts=unpublished_posts,
-        deleted_posts=deleted_posts
+        deleted_posts=deleted_posts,
+        zoneinfo=zoneinfo
     )
 
 
@@ -1397,8 +1405,9 @@ def add_post():
             # Fetch current user from session (if logged in), else set to None
             created_by = current_user.id if current_user.is_authenticated else None
             updated_by = current_user.id if current_user.is_authenticated else None
-            created_at = datetime.now(timezone.utc)
-            updated_at = datetime.now(timezone.utc)
+            now = datetime.now(ZoneInfo("Europe/Brussels"))
+            created_at = datetime.now(ZoneInfo("Europe/Brussels"))
+            updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
 
             # Insert new post and return its id
             cur.execute(
@@ -1422,7 +1431,7 @@ def add_post():
                     return redirect(url_for("add_post"))
             conn.commit()
         
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("manage_posts"))
         return render_template("admin/add_post.html", tags=all_tags)
 
     except Exception as e:
@@ -1434,52 +1443,64 @@ def add_post():
 
 
 # ════════════════════════════════════════════════
-# ▶ ADMIN: EDIT NEWS POST
+# ▶ ADMIN: EDIT POST
 # ════════════════════════════════════════════════
 
-@app.route('/author/edit/<int:post_id>', methods=['GET', 'POST'])
+@app.route("/post-bewerken/<int:post_id>", methods=["GET", "POST"], endpoint="edit_post")
 def edit_post(post_id):
-    ''' Edit existing post in database '''
+    ''' Edit an existing post '''
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM posts WHERE id = %s', (post_id,))
+    cur.execute("SELECT id, title, content, is_published, visibility, is_deleted, is_pinned FROM posts WHERE id = %s", (post_id,))
     post = cur.fetchone()
+    cur.execute("SELECT id, name FROM tags")
+    all_tags = cur.fetchall()
 
-    if request.method == 'POST':
-        title = request.form['title']
-        content = request.form['content']
-        category = request.form['category']
-        date = request.form['date']
-
-        image_file = request.files.get('image')
-        filename = post['image_filename'] if post else None
-
-        if image_file and image_file.filename != '':
-            if allowed_file(image_file.filename):
-                if post and post['image_filename']:
-                    old_path = os.path.join(app.config['UPLOAD_FOLDER'], post['image_filename'])
-                    if os.path.exists(old_path):
-                        os.remove(old_path)
-                filename = secure_filename(image_file.filename)
-                image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                image_file.save(image_path)
-            else:
-                flash('Alleen afbeeldingen zijn toegestaan (jpg, jpeg, png, gif)', 'danger')
-                return redirect(request.url)
-
-        cur.execute('UPDATE posts SET title=%s, content=%s, category=%s, date=%s, image_filename=%s WHERE id=%s',
-                    (title, content, category, date, filename, post_id))
-        conn.commit()
+    if not post:
+        flash("Post niet gevonden.", "warning")
         cur.close()
         conn.close()
+        return redirect(url_for("manage_posts"))
 
-        flash('Bericht bijgewerkt!', 'success')
-        return redirect(url_for('author'))
+    # Fetch tags for this post
+    cur.execute("SELECT tag_id FROM tag_map WHERE entity_type = %s AND entity_id = %s", ("post", post_id))
+    post_tag_rows = cur.fetchall()
+    post_tag_ids = [row["tag_id"] for row in post_tag_rows]
+
+    if request.method == "POST":
+        title = request.form.get("title")
+        content = request.form.get("content")
+        visibility = request.form.get("visibility", "public")
+        is_pinned = bool(request.form.get("is_pinned"))
+        is_published = bool(request.form.get("is_published"))
+        updated_by = current_user.id if current_user.is_authenticated else None
+        updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
+        selected_tags = request.form.getlist("tags")
+
+        cur.execute(
+            "UPDATE posts SET title = %s, content = %s, visibility = %s, is_pinned = %s, is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s",
+            (title, content, visibility, is_pinned, is_published, updated_by, updated_at, post_id)
+        )
+
+        # Update tags: remove old, add new
+        cur.execute("DELETE FROM tag_map WHERE entity_type = %s AND entity_id = %s", ("post", post_id))
+        for tag_id in selected_tags:
+            cur.execute("INSERT INTO tag_map (entity_type, entity_id, tag_id) VALUES (%s, %s, %s)", ("post", post_id, tag_id))
+
+        conn.commit()
+        flash("Post succesvol bijgewerkt.", "success")
+        cur.close()
+        conn.close()
+        return redirect(url_for("manage_posts"))
 
     cur.close()
     conn.close()
-    return render_template('add_edit_post.html', form_title='Bewerk Bericht', post=post)
-
+    return render_template(
+        "admin/edit_post.html",
+        post=post,
+        tags=all_tags,
+        post_tag_ids=post_tag_ids
+    )
 
 # ════════════════════════════════════════════════
 # ▶ ADMIN: SOFT DELETE POST
@@ -1491,9 +1512,11 @@ def soft_delete_post(post_id):
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s AND is_deleted = %s', (post_id, False))
     post = cur.fetchone()
+    current_user_id = current_user.id
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
 
     if post:
-        cur.execute('UPDATE posts SET is_deleted = %s, is_pinned = %s, is_published = %s WHERE id = %s', (True, False, False, post_id))
+        cur.execute('UPDATE posts SET is_deleted = %s, is_pinned = %s, is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s', (True, False, False, current_user_id, now, post_id))
         conn.commit()
         cur.close()
         conn.close()
@@ -1511,17 +1534,27 @@ def soft_delete_post(post_id):
 def hard_delete_post(post_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s', (post_id, True))
-    post = cur.fetchone()
+    try:
+        cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s', (post_id, True))
+        post = cur.fetchone()
+        cur.execute('SELECT * FROM tag_map WHERE entity_id = %s', (post_id,))
+        tag_mappings = cur.fetchall()
 
-    if post:
-        cur.execute('DELETE FROM posts WHERE id = %s', (post_id,))
-        conn.commit()
+        if tag_mappings:
+            cur.execute('DELETE FROM tag_map WHERE entity_id = %s', (post_id,))
+
+        if post:
+            cur.execute('DELETE FROM posts WHERE id = %s', (post_id,))
+            conn.commit()
+            flash('Post succesvol verwijderd.', 'success')
+        else:
+            flash('Geen post gevonden met dit ID. Niets verwijderd.', 'warning')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Fout bij verwijderen post: {e}', 'danger')
+    finally:
         cur.close()
         conn.close()
-        flash('Post succesvol verwijderd.', 'success')
-    else:
-        flash('Geen post gevonden met dit ID. Niets verwijderd.', 'warning')
     return redirect(url_for('manage_posts'))
 
 
@@ -1535,9 +1568,11 @@ def recover_post(post_id):
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s', (post_id, True))
     post = cur.fetchone()
+    current_user_id = current_user.id
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
 
     if post:
-        cur.execute('UPDATE posts SET is_deleted = %s, is_pinned = %s, is_published = %s WHERE id = %s', (False, False, False, post_id))
+        cur.execute('UPDATE posts SET is_deleted = %s, is_pinned = %s, is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s', (False, False, False, current_user_id, now, post_id))
         conn.commit()
         cur.close()
         conn.close()
@@ -1557,9 +1592,11 @@ def publish_post(post_id):
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s', (post_id, False, False))
     post = cur.fetchone()
+    current_user_id = current_user.id
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
 
     if post:
-        cur.execute('UPDATE posts SET is_published = %s WHERE id = %s', (True, post_id))
+        cur.execute('UPDATE posts SET is_published = %s, published_at = %s, updated_by = %s, updated_at = %s WHERE id = %s', (True, now,current_user_id, now, post_id))
         conn.commit()
         cur.close()
         conn.close()
@@ -1578,9 +1615,11 @@ def unpublish_post(post_id):
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s', (post_id, False, True))
     post = cur.fetchone()
+    current_user_id = current_user.id
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
 
     if post:
-        cur.execute('UPDATE posts SET is_published = %s, is_pinned = %s WHERE id = %s', (False, False, post_id))
+        cur.execute('UPDATE posts SET is_published = %s, is_pinned = %s, updated_by = %s, updated_at = %s WHERE id = %s', (False, False, current_user_id, now, post_id))
         conn.commit()
         cur.close()
         conn.close()
@@ -1668,8 +1707,9 @@ def add_event():
             # Fetch current user from session (if logged in), else set to None
             created_by = current_user.id if current_user.is_authenticated else None
             updated_by = current_user.id if current_user.is_authenticated else None
-            created_at = datetime.now(timezone.utc)
-            updated_at = datetime.now(timezone.utc)
+            now = datetime.now(ZoneInfo("Europe/Brussels"))
+            created_at = datetime.now(ZoneInfo("Europe/Brussels"))
+            updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
 
             # Insert new event and return its id
             cur.execute(
@@ -1693,7 +1733,7 @@ def add_event():
                     return redirect(url_for("add_event"))
             conn.commit()
         
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("manage_events"))
         return render_template("admin/add_event.html", tags=all_tags)
 
     except Exception as e:
@@ -1703,6 +1743,276 @@ def add_event():
     finally:
         cur.close()
 
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: MANAGE EVENTS
+# ════════════════════════════════════════════════
+
+@app.route('/evenementen-beheren', endpoint="manage_events")
+def manage_events():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
+
+    # Published upcoming events
+    cur.execute("""
+        SELECT e.id, e.title, e.subtitle, e.description, e.event_date, e.location, e.is_published, e.visibility, e.is_deleted, e.created_at, e.updated_at,
+               e.created_by, e.updated_by, e.published_at,
+               u1.username AS created_by_username, u2.username AS updated_by_username
+        FROM events e
+        LEFT JOIN users u1 ON e.created_by = u1.id
+        LEFT JOIN users u2 ON e.updated_by = u2.id
+        WHERE e.is_published = %s AND e.is_deleted = %s AND e.event_date >= %s
+        ORDER BY e.event_date ASC
+    """, (True, False, now.date()))
+    published_upcoming_events = cur.fetchall()
+
+    # Published past events
+    cur.execute("""
+        SELECT e.id, e.title, e.subtitle, e.description, e.event_date, e.location, e.is_published, e.visibility, e.is_deleted, e.created_at, e.updated_at,
+               e.created_by, e.updated_by, e.published_at,
+               u1.username AS created_by_username, u2.username AS updated_by_username
+        FROM events e
+        LEFT JOIN users u1 ON e.created_by = u1.id
+        LEFT JOIN users u2 ON e.updated_by = u2.id
+        WHERE e.is_published = %s AND e.is_deleted = %s AND e.event_date < %s
+        ORDER BY e.event_date DESC
+    """, (True, False, now.date()))
+    published_past_events = cur.fetchall()
+
+    # Unpublished events
+    cur.execute("""
+        SELECT e.id, e.title, e.subtitle, e.description, e.event_date, e.location, e.is_published, e.visibility, e.is_deleted, e.created_at, e.updated_at,
+               e.created_by, e.updated_by,
+               u1.username AS created_by_username, u2.username AS updated_by_username
+        FROM events e
+        LEFT JOIN users u1 ON e.created_by = u1.id
+        LEFT JOIN users u2 ON e.updated_by = u2.id
+        WHERE e.is_published = %s AND e.is_deleted = %s
+        ORDER BY e.event_date DESC
+    """, (False, False))
+    unpublished_events = cur.fetchall()
+
+    # Deleted events
+    cur.execute("""
+        SELECT e.id, e.title, e.subtitle, e.description, e.event_date, e.location, e.is_published, e.visibility, e.is_deleted, e.created_at, e.updated_at,
+               e.created_by, e.updated_by,
+               u1.username AS created_by_username, u2.username AS updated_by_username
+        FROM events e
+        LEFT JOIN users u1 ON e.created_by = u1.id
+        LEFT JOIN users u2 ON e.updated_by = u2.id
+        WHERE e.is_deleted = %s
+        ORDER BY e.updated_at DESC
+    """, (True,))
+    deleted_events = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return render_template('admin/manage_events.html',
+        published_upcoming_events=published_upcoming_events,
+        published_past_events=published_past_events,
+        unpublished_events=unpublished_events,
+        deleted_events=deleted_events,
+        zoneinfo=zoneinfo,
+        now=now
+    )
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: EDIT EVENT
+# ════════════════════════════════════════════════
+
+@app.route("/evenement-bewerken/<int:event_id>", methods=["GET", "POST"], endpoint="edit_event")
+def edit_event(event_id):
+    ''' Edit an existing event '''
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, title, subtitle, description, event_date, location, is_published, visibility, is_deleted FROM events WHERE id = %s", (event_id,))
+    event = cur.fetchone()
+    cur.execute("SELECT id, name FROM tags")
+    all_tags = cur.fetchall()
+
+    if not event:
+        flash("Evenement niet gevonden.", "warning")
+        cur.close()
+        conn.close()
+        return redirect(url_for("manage_events"))
+
+    # Fetch tags for this event
+    cur.execute("SELECT tag_id FROM tag_map WHERE entity_type = %s AND entity_id = %s", ("event", event_id))
+    event_tag_rows = cur.fetchall()
+    event_tag_ids = [row["tag_id"] for row in event_tag_rows]
+
+    if request.method == "POST":
+        title = request.form.get("title")
+        subtitle = request.form.get("subtitle")
+        description = request.form.get("description")
+        event_date_str = request.form.get("event_date")
+        location = request.form.get("location")
+        visibility = request.form.get("visibility", "public")
+        is_published = bool(request.form.get("is_published"))
+        updated_by = current_user.id if current_user.is_authenticated else None
+        updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
+        selected_tags = request.form.getlist("tags")
+
+        # Parse event_date
+        try:
+            event_date = datetime.strptime(event_date_str, "%Y-%m-%dT%H:%M")
+        except Exception:
+            event_date = None
+
+        cur.execute(
+            "UPDATE events SET title = %s, subtitle = %s, description = %s, event_date = %s, location = %s, visibility = %s, is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s",
+            (title, subtitle, description, event_date, location, visibility, is_published, updated_by, updated_at, event_id)
+        )
+
+        # Update tags: remove old, add new
+        cur.execute("DELETE FROM tag_map WHERE entity_type = %s AND entity_id = %s", ("event", event_id))
+        for tag_id in selected_tags:
+            cur.execute("INSERT INTO tag_map (entity_type, entity_id, tag_id) VALUES (%s, %s, %s)", ("event", event_id, tag_id))
+
+        conn.commit()
+        flash("Evenement succesvol bijgewerkt.", "success")
+        cur.close()
+        conn.close()
+        return redirect(url_for("manage_events"))
+
+    cur.close()
+    conn.close()
+    return render_template(
+        "admin/edit_event.html",
+        event=event,
+        tags=all_tags,
+        event_tag_ids=event_tag_ids
+    )
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: PUBLISH EVENT
+# ════════════════════════════════════════════════
+
+@app.route('/evenement-publiceren/<int:event_id>', methods=["GET", "POST"], endpoint="publish_event")
+def publish_event(event_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM events WHERE id = %s and is_deleted = %s and is_published = %s', (event_id, False, False))
+    event = cur.fetchone()
+    current_user_id = current_user.id
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
+
+    if event:
+        cur.execute('UPDATE events SET is_published = %s, published_at = %s, updated_by = %s, updated_at = %s WHERE id = %s', (True, now, current_user_id, now, event_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Evenement succesvol gepubliceerd.', 'success')
+    else:
+        flash('Geen evenement gevonden met dit ID. Niets gepubliceerd.', 'warning')
+    return redirect(url_for('manage_events'))
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: UNPUBLISH EVENT
+# ════════════════════════════════════════════════
+
+@app.route('/evenement-publiceren-ongedaan-maken/<int:event_id>', methods=["GET", "POST"], endpoint="unpublish_event")
+def unpublish_event(event_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM events WHERE id = %s and is_deleted = %s and is_published = %s', (event_id, False, True))
+    event = cur.fetchone()
+    current_user_id = current_user.id
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
+
+    if event:
+        cur.execute('UPDATE events SET is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s', (False, current_user_id, now, event_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Evenement succesvol offline gehaald.', 'success')
+    else:
+        flash('Geen evenement gevonden met dit ID.', 'warning')
+    return redirect(url_for('manage_events'))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: SOFT DELETE EVENT
+# ════════════════════════════════════════════════
+
+@app.route('/evenement-verwijderen/<int:event_id>', methods=["GET", "POST"], endpoint="soft_delete_event")
+def soft_delete_event(event_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM events WHERE id = %s AND is_deleted = %s', (event_id, False))
+    event = cur.fetchone()
+    current_user_id = current_user.id
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
+
+    if event:
+        cur.execute('UPDATE events SET is_deleted = %s, is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s', (True, False, current_user_id, now, event_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Evenement succesvol verwijderd.', 'success')
+    else:
+        flash('Geen evenement gevonden met dit ID. Niets verwijderd.', 'warning')
+    return redirect(url_for('manage_events'))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: HARD DELETE EVENT
+# ════════════════════════════════════════════════
+
+@app.route('/evenement-definitief-verwijderen/<int:event_id>', methods=["GET", "POST"], endpoint="hard_delete_event")
+def hard_delete_event(event_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute('SELECT id FROM events WHERE id = %s and is_deleted = %s', (event_id, True))
+        event = cur.fetchone()
+        cur.execute('SELECT * FROM tag_map WHERE entity_type = %s AND entity_id = %s', ('event', event_id))
+        tag_mappings = cur.fetchall()
+
+        if tag_mappings:
+            cur.execute('DELETE FROM tag_map WHERE entity_type = %s AND entity_id = %s', ('event', event_id))
+
+        if event:
+            cur.execute('DELETE FROM events WHERE id = %s', (event_id,))
+            conn.commit()
+            flash('Evenement succesvol verwijderd.', 'success')
+        else:
+            flash('Geen evenement gevonden met dit ID. Niets verwijderd.', 'warning')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Fout bij verwijderen evenement: {e}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for('manage_events'))
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: RECOVER EVENT
+# ════════════════════════════════════════════════
+
+@app.route('/evenement-herstellen/<int:event_id>', methods=["GET", "POST"], endpoint="recover_event")
+def recover_event(event_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT id FROM events WHERE id = %s and is_deleted = %s', (event_id, True))
+    event = cur.fetchone()
+    current_user_id = current_user.id
+    now = datetime.now(ZoneInfo("Europe/Brussels"))
+
+    if event:
+        cur.execute('UPDATE events SET is_deleted = %s, is_published = %s, updated_by = %s, updated_at = %s WHERE id = %s', (False, False, current_user_id, now, event_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Evenement succesvol hersteld.', 'success')
+    else:
+        flash('Geen evenement gevonden met dit ID. Niets hersteld.', 'warning')
+    return redirect(url_for('manage_events'))
 
 
 # ════════════════════════════════════════════════
@@ -1735,7 +2045,7 @@ def add_tag():
                 conn.commit()
                 flash('Tag toegevoegd aan database.', 'success')
         
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("manage_tags"))
         return render_template("admin/add_tag.html")
 
     except Exception as e:
@@ -1747,13 +2057,69 @@ def add_tag():
 
 
 # ════════════════════════════════════════════════
-# ▶ FUNCTIONS
+# ▶ ADMIN: DELETE TAG
+# ════════════════════════════════════════════════
+@app.route("/tag-verwijderen/<int:tag_id>", methods=["POST"], endpoint="delete_tag")
+def delete_tag(tag_id):
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("SELECT tag_id FROM tag_map WHERE tag_id = %s", (tag_id,))
+        tag_mappings = cur.fetchall()
+
+        if tag_mappings:
+            cur.execute("DELETE FROM tag_map WHERE tag_id = %s", (tag_id,))
+
+        cur.execute("DELETE FROM tags WHERE id = %s RETURNING name", (tag_id,))
+        deleted_tag = cur.fetchone()
+        conn.commit()
+        if deleted_tag and "name" in deleted_tag:
+            tag_name = deleted_tag["name"]
+            flash(f"Tag '{tag_name}' succesvol verwijderd.", "success")
+        else:
+            flash("Geen tag gevonden met dit ID. Niets verwijderd.", "warning")
+        return redirect(url_for("manage_tags"))
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Er is een fout opgetreden: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+
+
+
+# ════════════════════════════════════════════════
+# ▶ ADMIN: MANAGE TAGS
 # ════════════════════════════════════════════════
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png', 'gif'}
+@app.route("/tags-beheren", methods=["GET", "POST"], endpoint="manage_tags")
+def manage_tags():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Fetch all tags with event and post counts
+    cur.execute("""
+        SELECT
+            t.id,
+            t.name,
+            COALESCE(SUM(CASE WHEN tm.entity_type = 'event' THEN 1 ELSE 0 END), 0) AS event_count,
+            COALESCE(SUM(CASE WHEN tm.entity_type = 'post' THEN 1 ELSE 0 END), 0) AS post_count
+        FROM tags t
+        LEFT JOIN tag_map tm ON t.id = tm.tag_id
+        GROUP BY t.id, t.name
+        ORDER BY t.name ASC
+    """)
+    tags = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('admin/manage_tags.html', tags=tags)
 
 
+# ════════════════════════════════════════════════
+# ▶ FUNCTIONS
+# ════════════════════════════════════════════════
 def get_existing_usernames():
     conn = get_db_connection()
     cur = conn.cursor()

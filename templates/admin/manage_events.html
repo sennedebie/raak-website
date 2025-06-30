@@ -1,0 +1,254 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/manage_events.css') }}"
+/>
+{% endblock %} {% block title %} Evenementen beheren {% endblock %} {% block
+content %}
+
+<div class="table-tile">
+  <h1>Evenementen beheren</h1>
+  <a href="{{ url_for('add_event') }}" class="add-btn">
+    <i class="fa-solid fa-plus"></i> Evenement toevoegen
+  </a>
+
+  <!-- Published Events - Upcoming -->
+  <h2 class="group-header header-published">
+    Gepubliceerd - Komende evenementen
+  </h2>
+  <table>
+    <tr>
+      <th>Titel</th>
+      <th>Datum</th>
+      <th>Gepubliceerd op</th>
+      <th>Acties</th>
+    </tr>
+    {% for event in published_upcoming_events %}
+    <tr>
+      <td>{{ event.title if event.title else "(geen titel)" }}</td>
+      <td>
+        <span class="date-day">
+          {{
+          event.event_date.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%a')
+          |replace('Mon','Ma')|replace('Tue','Di')|replace('Wed','Wo')|replace('Thu','Do')|replace('Fri','Vr')|replace('Sat','Za')|replace('Sun','Zo')
+          }}
+        </span>
+        {{
+        event.event_date.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d')
+        if event.event_date else '' }}
+      </td>
+      <td>
+        {{
+        event.published_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if event.published_at else '' }}
+      </td>
+      <td>
+        <a
+          href="{{ url_for('unpublish_event', event_id=event.id)}}"
+          title="Onpubliceren"
+          ><i class="fa-solid fa-eye-slash"></i
+        ></a>
+        <a href="{{ url_for('edit_event', event_id=event.id)}}" title="Bewerken"
+          ><i class="fa-solid fa-pen-to-square"></i
+        ></a>
+        <form
+          action="{{ url_for('soft_delete_event', event_id=event.id)}}"
+          method="post"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            class="icon-btn"
+            title="Verwijderen"
+            onclick="return confirm('Weet je zeker dat je dit evenement wilt verwijderen?');"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="4" class="empty-row">
+        Geen komende gepubliceerde evenementen.
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <!-- Published Events - Past -->
+  <h2 class="group-header header-published">
+    Gepubliceerd - Voorbije evenementen
+  </h2>
+  <table>
+    <tr>
+      <th>Titel</th>
+      <th>Datum</th>
+      <th>Gepubliceerd op</th>
+      <th>Acties</th>
+    </tr>
+    {% for event in published_past_events %}
+    <tr>
+      <td>{{ event.title if event.title else "(geen titel)" }}</td>
+      <td>
+        <span class="date-day">
+          {{
+          event.event_date.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%a')
+          |replace('Mon','Ma')|replace('Tue','Di')|replace('Wed','Wo')|replace('Thu','Do')|replace('Fri','Vr')|replace('Sat','Za')|replace('Sun','Zo')
+          }}
+        </span>
+        {{
+        event.event_date.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d')
+        if event.event_date else '' }}
+      </td>
+      <td>
+        {{
+        event.published_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if event.published_at else '' }}
+      </td>
+      <td>
+        <a
+          href="{{ url_for('unpublish_event', event_id=event.id)}}"
+          title="Onpubliceren"
+          ><i class="fa-solid fa-eye-slash"></i
+        ></a>
+        <a href="{{ url_for('edit_event', event_id=event.id)}}" title="Bewerken"
+          ><i class="fa-solid fa-pen-to-square"></i
+        ></a>
+        <form
+          action="{{ url_for('soft_delete_event', event_id=event.id)}}"
+          method="post"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            class="icon-btn"
+            title="Verwijderen"
+            onclick="return confirm('Weet je zeker dat je dit evenement wilt verwijderen?');"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="4" class="empty-row">
+        Geen voorbije gepubliceerde evenementen.
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <!-- Unpublished Events -->
+  <h2 class="group-header header-unpublished">Niet-gepubliceerd</h2>
+  <table>
+    <tr>
+      <th>Titel</th>
+      <th>Datum</th>
+      <th>Aangemaakt door</th>
+      <th>Acties</th>
+    </tr>
+    {% for event in unpublished_events %}
+    <tr>
+      <td>{{ event.title if event.title else "(geen titel)" }}</td>
+      <td>
+        <span class="date-day">
+          {{
+          event.event_date.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%a')
+          |replace('Mon','Ma')|replace('Tue','Di')|replace('Wed','Wo')|replace('Thu','Do')|replace('Fri','Vr')|replace('Sat','Za')|replace('Sun','Zo')
+          }}
+        </span>
+        {{
+        event.event_date.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d')
+        if event.event_date else '' }}
+      </td>
+      <td>{{ event.created_by_username }}</td>
+      <td>
+        <a
+          href="{{ url_for('publish_event', event_id=event.id)}}"
+          title="Publiceren"
+          ><i class="fa-solid fa-eye"></i
+        ></a>
+        <a href="{{ url_for('edit_event', event_id=event.id)}}" title="Bewerken"
+          ><i class="fa-solid fa-pen-to-square"></i
+        ></a>
+        <form
+          action="{{ url_for('soft_delete_event', event_id=event.id)}}"
+          method="post"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            class="icon-btn"
+            title="Verwijderen"
+            onclick="return confirm('Weet je zeker dat je dit evenement wilt verwijderen?');"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="4" class="empty-row">
+        Geen niet-gepubliceerde evenementen.
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <!-- Deleted Events -->
+  <h2 class="group-header header-deleted">Verwijderd</h2>
+  <table>
+    <tr>
+      <th>Titel</th>
+      <th>Datum</th>
+      <th>Aangemaakt door</th>
+      <th>Acties</th>
+    </tr>
+    {% for event in deleted_events %}
+    <tr>
+      <td>{{ event.title if event.title else "(geen titel)" }}</td>
+      <td>
+        <span class="date-day">
+          {{
+          event.event_date.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%a')
+          |replace('Mon','Ma')|replace('Tue','Di')|replace('Wed','Wo')|replace('Thu','Do')|replace('Fri','Vr')|replace('Sat','Za')|replace('Sun','Zo')
+          }}
+        </span>
+        {{
+        event.event_date.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d')
+        if event.event_date else '' }}
+      </td>
+      <td>{{ event.created_by_username }}</td>
+      <td>
+        <a
+          href="{{ url_for('recover_event', event_id=event.id)}}"
+          title="Herstellen"
+          ><i class="fa-solid fa-rotate-left"></i
+        ></a>
+        <form
+          action="{{ url_for('hard_delete_event', event_id=event.id)}}"
+          method="post"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            class="icon-btn"
+            title="Definitief verwijderen"
+            onclick="return confirm('Weet je zeker dat je dit evenement definitief wilt verwijderen?');"
+          >
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="4" class="empty-row">Geen verwijderde evenementen.</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

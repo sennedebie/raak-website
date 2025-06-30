@@ -37,8 +37,9 @@
       <td class="role-description">{{ role.description }}</td>
 
       <td>
-        {{ role.created_at.strftime('%Y-%m-%d %H:%M') if role.created_at else ''
-        }}
+        {{
+        role.created_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') if role.created_at else '' }} }}
       </td>
       <td>{{ role.created_by_username }}</td>
 
@@ -126,8 +127,9 @@
       <tr>
         <td>{{ user.username }}</td>
         <td>
-          {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else
-          '' }}
+          {{
+          user.created_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+          %H:%M') if user.created_at else '' }} '' }}
         </td>
         <td>{{ user.created_by_username }}</td>
 

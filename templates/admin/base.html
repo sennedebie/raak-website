@@ -216,7 +216,7 @@
                   ></i>
                 </a>
                 {% else %}
-                <a href="#">Tags beheren</a>
+                <a href="{{ url_for('manage_tags') }}">Tags beheren</a>
                 {% endif %}
               </li>
             </ul>
@@ -257,7 +257,7 @@
                   ></i>
                 </a>
                 {% else %}
-                <a href="#">Evenementen beheren</a>
+                <a href="{{ url_for('manage_events') }}">Evenementen beheren</a>
                 {% endif %}
               </li>
               <li>

@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/manage_tags.css') }}"
+/>
+{% endblock %} {% block title %}Tags beheren{% endblock %} {% block content %}
+
+<div class="table-tile">
+  <h1>Tags beheren</h1>
+  <a href="{{ url_for('add_tag') }}" class="add-btn">
+    <i class="fa-solid fa-tag"></i> Tag toevoegen
+  </a>
+  <table>
+    <tr>
+      <th>Tag</th>
+      <th># Events</th>
+      <th># Posts</th>
+      <th>Acties</th>
+    </tr>
+    {% for tag in tags %}
+    <tr>
+      <td>{{ tag.name|capitalize }}</td>
+      <td>{{ tag.event_count }}</td>
+      <td>{{ tag.post_count }}</td>
+      <td>
+        <form
+          action="{{ url_for('delete_tag', tag_id=tag.id) }}"
+          method="post"
+          style="display: inline"
+          onsubmit="return confirm('Weet je zeker dat je deze tag wilt verwijderen?');"
+        >
+          <button type="submit" class="icon-btn" title="Verwijderen">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="4" class="empty-row">Geen tags gevonden.</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% endblock %}

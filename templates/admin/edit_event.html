@@ -1,0 +1,113 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/edit_event.css') }}"
+/>
+{% endblock %} {% block title %}Evenement bewerken{% endblock %} {% block
+content %}
+
+<div class="form">
+  <form action="{{ url_for('edit_event', event_id=event.id) }}" method="POST">
+    <h1>Evenement bewerken</h1>
+
+    <label class="label1" for="title"
+      >Titel <span class="required-field">*</span></label
+    >
+    <input
+      type="text"
+      id="title"
+      name="title"
+      required
+      value="{{ event.title }}"
+    />
+
+    <label class="label1" for="subtitle"
+      >Headliner <span class="required-field">*</span></label
+    >
+
+    <small id="subtitle-counter">{{ event.subtitle|length }} / 150</small>
+
+    <input
+      type="text"
+      id="subtitle"
+      name="subtitle"
+      required
+      maxlength="150"
+      value="{{ event.subtitle }}"
+      oninput="updateCounter()"
+    />
+
+    <label class="label1" for="location"
+      >Locatie <span class="required-field">*</span></label
+    >
+    <input
+      type="text"
+      id="location"
+      name="location"
+      required
+      value="{{ event.location }}"
+    />
+
+    <label class="label1" for="event_date"
+      >Datum & tijd <span class="required-field">*</span></label
+    >
+    <input
+      type="datetime-local"
+      id="event_date"
+      name="event_date"
+      required
+      value="{{ event.event_date.strftime('%Y-%m-%dT%H:%M') if event.event_date else '' }}"
+    />
+
+    <label class="label1" for="description"
+      >Beschrijving <span class="required-field">*</span></label
+    >
+    <textarea id="description" name="description" required>
+{{ event.description }}</textarea
+    >
+
+    <label class="label1" for="tags">Tags toevoegen</label>
+    <div id="tags" class="checkbox-group">
+      {% for tag in tags %}
+      <div class="checkbox-item">
+        <input
+          type="checkbox"
+          id="tag_{{ tag.id }}"
+          name="tags"
+          value="{{ tag.id }}"
+          {%
+          if
+          tag.id
+          in
+          event.tag_ids
+          %}checked{%
+          endif
+          %}
+        />
+        <label for="tag_{{ tag.id }}">{{ tag.name|capitalize }}</label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="normal-button">Opslaan</button>
+  </form>
+  <p class="form-text">
+    Gebruik dit formulier om een bestaand evenement te bewerken. De wijzigingen
+    worden opgeslagen als concept en kunnen gepubliceerd worden door de
+    redacteur.
+  </p>
+  <p class="form-text">* Dit is een vereist veld.</p>
+</div>
+
+<script>
+  // Letter counter
+  function updateCounter() {
+    const input = document.getElementById("subtitle");
+    const counter = document.getElementById("subtitle-counter");
+    counter.textContent = input.value.length + " / 150";
+  }
+  document.getElementById("subtitle").addEventListener("input", updateCounter);
+  // Initialize counter on page load
+  updateCounter();
+</script>
+{% endblock %}
