@@ -257,6 +257,8 @@ def index():
             post["image_url"] = image_url
 
     finally:
+        cur.close()
+        conn.close()
         return render_template("public/index.html", posts=posts)
 
 
@@ -273,14 +275,42 @@ def news():
     '''
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT * FROM posts WHERE is_published = %s AND visibility = %s AND is_deleted = %s 
-        ORDER BY published_at DESC""",
-        (True, 'public', False))
-    posts = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('public/news.html', posts=posts)
+    try:
+        cur.execute("""
+        SELECT id, title, content, created_at, published_at
+        FROM posts
+        WHERE is_pinned = %s and is_published = %s and is_deleted = %s and visibility = %s
+        ORDER BY created_at DESC
+        LIMIT 3""", (True, True, False, "public"))
+        posts = cur.fetchall()
+
+        for post in posts:
+            post_id = post["id"]
+            cur.execute("""
+                SELECT t.name, t.background_color, t.text_color
+                FROM tag_map tm
+                LEFT JOIN tags t ON tm.tag_id = t.id
+                WHERE tm.entity_type = %s AND tm.entity_id = %s
+                ORDER BY t.name ASC
+            """, ("post", post_id))
+            post_tags = [row for row in cur.fetchall()]
+            post["tags"] = post_tags  # Attach tags to the post
+
+        for post in posts:
+            post_id = post["id"]
+            cur.execute("""b
+                SELECT url
+                FROM post_images
+                WHERE post_id = %s AND is_main = %s
+            """, (post_id, True))
+            image_row = cur.fetchone()
+            image_url = image_row["url"] if image_row else None
+            post["image_url"] = image_url
+
+    finally:
+        cur.close()
+        conn.close()
+        return render_template('public/news.html', posts=posts)
 
 
 # ════════════════════════════════════════════════
