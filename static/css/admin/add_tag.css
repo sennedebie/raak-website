@@ -27,5 +27,16 @@ h1 {
 }
 
 .normal-button {
+    margin-top: 50px;
     width: 100%;
+}
+
+input[type="color"] {
+    width: 60px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    background: none;
+    margin-bottom: 1.2em;
+    cursor: pointer;
 }

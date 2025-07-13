@@ -145,6 +145,15 @@ h1 {
 }
 
 
+.tag {
+    display: block;
+    font-weight: lighter;
+    font-size: 18px;
+    display: inline;
+    padding: 4px 6px;
+    border-radius: 5px;
+}
+
 
 
 

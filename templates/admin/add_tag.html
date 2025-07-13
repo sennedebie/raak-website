@@ -15,10 +15,46 @@
     >
     <input type="text" id="name" name="name" required />
 
+    <label class="label1" for="background_color"
+      >Achtergrondkleur <span class="required-field">*</span></label
+    >
+    <input
+      type="color"
+      id="background_color"
+      name="background_color"
+      value="#F0F0F0"
+      required
+      style="
+        width: 60px;
+        height: 34px;
+        padding: 0;
+        border: none;
+        background: none;
+      "
+    />
+
+    <label class="label1" for="text_color"
+      >Tekstkleur <span class="required-field">*</span></label
+    >
+    <input
+      type="color"
+      id="text_color"
+      name="text_color"
+      value="#2E2E2E"
+      required
+      style="
+        width: 60px;
+        height: 34px;
+        padding: 0;
+        border: none;
+        background: none;
+      "
+    />
+
     <button type="submit" class="normal-button">Aanmaken</button>
   </form>
   <p class="form-text">
-    Gebruik dit formulier om een nieuwe tag te voegen. Tags kunnen gekoppeld
+    Gebruik dit formulier om een nieuwe tag toe te voegen. Tags kunnen gekoppeld
     worden aan posts en evenementen.
   </p>
   <p class="form-text">* Dit is een vereist veld.</p>

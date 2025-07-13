@@ -1,0 +1,51 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/edit_tag.css') }}"
+/>
+{% endblock %} {% block title %}Tag bewerken{% endblock %} {% block content %}
+
+<div class="form">
+  <form action="{{ url_for('edit_tag', tag_id=tag.id) }}" method="POST">
+    <h1>Tag bewerken</h1>
+
+    <label class="label1" for="name"
+      >Naam <span class="required-field">*</span></label
+    >
+    <input type="text" id="name" name="name" value="{{ tag.name }}" required />
+
+    <label class="label1" for="background_color">
+      Achtergrondkleur <span class="required-field">*</span>
+    </label>
+    <input
+      type="color"
+      id="background_color"
+      name="background_color"
+      value="{{ tag.background_color or '#F0F0F0' }}"
+      required
+      style="
+        width: 60px;
+        height: 34px;
+        padding: 0;
+        border: none;
+        background: none;
+      "
+    />
+
+    <label class="label1" for="text_color">
+      Tekstkleur <span class="required-field">*</span>
+    </label>
+    <input type="color" id=text_color" name="text_color" value="{{
+    tag.text_color or '#2E2E2E' }}" required style=" width: 60px; height: 34px;
+    padding: 0; border: none; background: none; " />
+
+    <button type="submit" class="normal-button">Opslaan</button>
+  </form>
+  <p class="form-text">
+    Gebruik dit formulier om een bestaande tag te bewerken. Vergeet niet op te
+    slaan om wijzigingen door te voeren.
+  </p>
+  <p class="form-text">* Dit is een vereist veld.</p>
+</div>
+{% endblock%}

@@ -236,18 +236,18 @@ def index():
         for post in posts:
             post_id = post["id"]
             cur.execute("""
-                SELECT t.name
+                SELECT t.name, t.background_color, t.text_color
                 FROM tag_map tm
                 LEFT JOIN tags t ON tm.tag_id = t.id
                 WHERE tm.entity_type = %s AND tm.entity_id = %s
                 ORDER BY t.name ASC
             """, ("post", post_id))
-            post_tags = [row["name"] for row in cur.fetchall()]
+            post_tags = [row for row in cur.fetchall()]
             post["tags"] = post_tags  # Attach tags to the post
 
         for post in posts:
             post_id = post["id"]
-            cur.execute("""
+            cur.execute("""b
                 SELECT url
                 FROM post_images
                 WHERE post_id = %s AND is_main = %s
@@ -614,7 +614,6 @@ def add_user():
     finally:
         cur.close()
         conn.close()
-
 
 # ════════════════════════════════════════════════
 # ▶ ADMIN: RESET PASSWORD
@@ -2031,6 +2030,8 @@ def add_tag():
     try:
         if request.method == "POST":
             name = request.form.get("name")
+            background_color = request.form.get("color_bg", "#F0F0F0")
+            text_color = request.form.get("color_text", "#2E2E2E")
 
             if not name or not name.strip():
                 raise Exception("Tagnaam mag niet leeg zijn of alleen uit spaties bestaan.")
@@ -2041,7 +2042,10 @@ def add_tag():
                 raise Exception("Deze tag bestaat al.")
 
             else:
-                cur.execute("INSERT INTO tags (name) VALUES (%s)", (clean_name,))
+                cur.execute(
+                    "INSERT INTO tags (name, background_color, text_color) VALUES (%s, %s, %s)",
+                    (clean_name, background_color, text_color)
+                )
                 conn.commit()
                 flash('Tag toegevoegd aan database.', 'success')
         
@@ -2092,6 +2096,56 @@ def delete_tag(tag_id):
 
 
 # ════════════════════════════════════════════════
+# ▶ ADMIN: EDIT TAG
+# ════════════════════════════════════════════════
+
+@app.route("/tag-bewerken/<int:tag_id>", methods=["GET", "POST"], endpoint="edit_tag")
+def edit_tag(tag_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, background_color, text_color FROM tags WHERE id = %s", (tag_id,))
+    tag = cur.fetchone()
+
+    if not tag:
+        flash("Tag niet gevonden.", "warning")
+        cur.close()
+        conn.close()
+        return redirect(url_for("manage_tags"))
+
+    if request.method == "POST":
+        new_name = request.form.get("name", "").strip().lower()
+        background_color = request.form.get("background_color", "#F0F0F0")
+        text_color = request.form.get("text_color", "#2E2E2E")
+        if not new_name:
+            flash("Tagnaam mag niet leeg zijn.", "danger")
+            cur.close()
+            conn.close()
+            return render_template("admin/edit_tag.html", tag=tag)
+
+        # Check for duplicate tag name (excluding current tag)
+        cur.execute("SELECT id FROM tags WHERE LOWER(name) = %s AND id != %s", (new_name, tag_id))
+        if cur.fetchone():
+            flash("Deze tag bestaat al.", "danger")
+            cur.close()
+            conn.close()
+            return render_template("admin/edit_tag.html", tag=tag)
+
+        cur.execute(
+            "UPDATE tags SET name = %s, background_color = %s, text_color = %s WHERE id = %s",
+            (new_name, background_color, text_color, tag_id)
+        )
+        conn.commit()
+        flash("Tag succesvol bijgewerkt.", "success")
+        cur.close()
+        conn.close()
+        return redirect(url_for("manage_tags"))
+
+    cur.close()
+    conn.close()
+    return render_template("admin/edit_tag.html", tag=tag)
+
+
+# ════════════════════════════════════════════════
 # ▶ ADMIN: MANAGE TAGS
 # ════════════════════════════════════════════════
 
@@ -2102,8 +2156,7 @@ def manage_tags():
     # Fetch all tags with event and post counts
     cur.execute("""
         SELECT
-            t.id,
-            t.name,
+            t.id, t.name, t.background_color, t.text_color,
             COALESCE(SUM(CASE WHEN tm.entity_type = 'event' THEN 1 ELSE 0 END), 0) AS event_count,
             COALESCE(SUM(CASE WHEN tm.entity_type = 'post' THEN 1 ELSE 0 END), 0) AS post_count
         FROM tags t

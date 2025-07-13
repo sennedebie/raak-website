@@ -12,6 +12,7 @@ td a:last-child i {
 }
 td a:hover i {
   color: #ee3a37;
+  text-decoration: none;
 }
 
 .add-btn {
@@ -67,6 +68,16 @@ td a:hover i {
 
 .icon-btn:hover i {
   color: #ee3a37;
+  text-decoration: none;
+}
+
+
+.tag {
+    font-weight: lighter;
+    font-size: 18px;
+    display: inline;
+    padding: 4px 6px;
+    border-radius: 5px;
 }
 
 @media (max-width: 900px) {

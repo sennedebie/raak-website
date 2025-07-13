@@ -42,10 +42,17 @@ content %}
       <div class="body-container">
         <p class="post-title">{{ post.title }}</p>
         <p class="post-date">{{ post.published_at.strftime('%d/%m/%Y') }}</p>
-        <div class="post-tags">
-          {% if post.tags %} {% for tag in post.tags %}
-          <span class="tag">{{ tag|capitalize }}</span>
-          {% endfor %} {% endif %}
+        <div class="tag-container">
+          {% if post.tags %} {% for tag in post.tags %} {% if
+          tag.background_color is defined and tag.text_color is defined %}
+          <span
+            class="tag"
+            style="background-color: {{ tag.background_color }}; color: {{ tag.text_color }};"
+            >{{ tag.name|capitalize }}</span
+          >
+          {% else %}
+          <span class="tag">{{ tag.name|capitalize }}</span>
+          {% endif %} {% endfor %} {% endif %}
         </div>
 
         <p class="post-content">
