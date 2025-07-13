@@ -2,10 +2,6 @@
 /* ▶ SECTION STYLING                                */
 /* ════════════════════════════════════════════════ */
 
-/* ════════════════════════════════════════════════ */
-/* ▶ SECTION STYLING                                */
-/* ════════════════════════════════════════════════ */
-
 .section1 { background-color: #3aba9b; }
 .section2 { background-color: #ffce00; }
 .section3 { background-color: #f17fb2; }
@@ -87,24 +83,29 @@
 
 .news-flexbox {
     display: flex;
+    flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-evenly;
-    margin: 32px 0px;
+    justify-content: space-around;
+    gap: 30px;
+    margin: 25px;
 }
 
 .news-item {
+    flex: 1 1 100%;
+    max-width: 100%;
+    min-width: 0;
+    align-self: stretch;
+    text-align: justify;
+    margin: 10px;
     background: white;
     color: #222;
     border-radius: 12px;
     box-shadow: 5px 15px 10px rgba(0, 0, 0, 0.1);
     padding: 25px 25px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    flex: 1 1 calc(30%); /* Allow up to 3 per row, accounting for gap */
-    max-width: calc(30%);
-    min-width: 250px;
-    box-sizing: border-box;
+    height: 100%;
 }
 
 .news-item .news-image {
@@ -113,7 +114,7 @@
     object-fit: cover;
     object-position: center center;
     border-radius: 8px;
-    margin-bottom: 1rem ;
+    margin-bottom: 1rem;
     background: #eee;
 }
 
@@ -121,12 +122,13 @@
     color: #333;
     font-size: 1.4rem;
     margin-bottom: 10px;
+    text-align: left;
 }
 
 .post-date {
     display: inline;
     font-size: 1.1rem;
-    color: #ee3a37;
+    color: #5f5f5f;
     font-weight: lighter;
     margin-right: 10px;
 }
@@ -138,27 +140,34 @@
     font-size: 1.1rem;
     text-align: justify;
     margin-top: 20px;
-    /* word-break: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto; */
+}
+
+.post-tags {
+    font-weight: lighter;
+    color: #184ad4;
+    background-color: #d5def7;
+    font-size: 18px;
+    display: inline; /* Only background behind text */
+    padding: 4px 6px;
+    border-radius: 5px;
 }
 
 .read-more {
-  display: inline-block;
-  margin-top: 20px;
-  font-size: 1rem;
-  text-decoration: none;
-  color: #0051a4;
-  transition: all 0.5s ease-in-out;
+    display: inline-block;
+    margin-top: 20px;
+    font-size: 1rem;
+    text-decoration: none;
+    color: #0051a4;
+    transition: all 0.5s ease-in-out;
 }
 
 .read-more:hover {
-  color: #ee3a37;
-  font-weight: bold;
+    color: #ee3a37;
+    font-weight: bold;
 }
 
 .read-more:active {
-  color: #ffce00;
+    color: #ffce00;
 }
 
 

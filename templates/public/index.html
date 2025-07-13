@@ -12,7 +12,7 @@
 {% endblock %} {% block title %}Raak Leerbeek-Kester{% endblock %} {% block
 content %}
 
-<!-- Section 1: Hero/Intro -->
+<!-- Section 1: Intro -->
 <section class="section1">
   <p class="title">Beleef meer!</p>
   <h2 class="subtitle1">in Leerbeek-Kester</h2>
@@ -42,9 +42,9 @@ content %}
       <div class="body-container">
         <p class="post-title">{{ post.title }}</p>
         <p class="post-date">{{ post.published_at.strftime('%d/%m/%Y') }}</p>
-        <div class="tags">
+        <div class="post-tags">
           {% if post.tags %} {% for tag in post.tags %}
-          <span class="tag">{{ tag }}</span>
+          <span class="tag">{{ tag|capitalize }}</span>
           {% endfor %} {% endif %}
         </div>
 

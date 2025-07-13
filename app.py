@@ -273,7 +273,10 @@ def news():
     '''
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM posts ORDER BY is_pinned DESC, created_at DESC')
+    cur.execute("""
+        SELECT * FROM posts WHERE is_published = %s AND visibility = %s AND is_deleted = %s 
+        ORDER BY published_at DESC""",
+        (True, 'public', False))
     posts = cur.fetchall()
     cur.close()
     conn.close()
