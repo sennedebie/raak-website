@@ -485,7 +485,8 @@ def set_password():
         flash("Je moet ingelogd zijn om je wachtwoord in te stellen.", "warning")
         return redirect(url_for("login"))
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
     cur = conn.cursor()
     cur.execute("SELECT username FROM users WHERE id = %s", (current_user.id,))
     user_row = cur.fetchone()
@@ -607,7 +608,10 @@ def dashboard():
 def add_user():
     ''' Add new user to database. '''
 
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     # Exclude 'super' from the roles list
     cur.execute("SELECT id, name FROM roles WHERE name != %s", ('super',))
@@ -670,6 +674,8 @@ def add_user():
     except Exception as e:
         conn.rollback()
         flash(f"Er is een fout opgetreden: {e}", "danger")
+        return render_template("admin/add_user.html", roles=roles)
+
     finally:
         cur.close()
         conn.close()
@@ -684,7 +690,9 @@ def reset_password(user_id):
      
       This generates a new token that is send to users' email. '''
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         # Generate a random token (password) for the new user
@@ -718,7 +726,10 @@ def reset_password(user_id):
 
 @app.route("/gebruiker-verwijderen/<int:user_id>", methods=["POST"], endpoint="delete_user")
 def delete_user(user_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         # User can not delete its own account
@@ -787,7 +798,10 @@ def delete_user(user_id):
 def deactivate_user(user_id):
     updated_by = current_user.id if current_user.is_authenticated else None
     updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         if user_id == int(current_user.id):
@@ -815,7 +829,10 @@ def deactivate_user(user_id):
 def activate_user(user_id):
     updated_by = current_user.id if current_user.is_authenticated else None
     updated_at = datetime.now(ZoneInfo("Europe/Brussels"))
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         cur.execute("UPDATE users SET is_active = %s, updated_by = %s, updated_at = %s WHERE id = %s RETURNING username", (True, updated_by, updated_at, user_id))
@@ -914,7 +931,9 @@ def manage_users():
 def add_role():
     ''' Add new role to database. '''
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)    
+
     cur = conn.cursor()
     cur.execute("SELECT id, name FROM permissions")
     all_permissions = cur.fetchall()
@@ -977,7 +996,9 @@ def add_role():
 def delete_role(role_id):
     ''' Delete role from database'''
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
 
     try:
@@ -1024,7 +1045,10 @@ def assign_role(role_id):
         flash("Geen gebruiker geselecteerd.", "warning")
         return redirect(url_for("manage_roles"))
 
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         # Check if user already has this role
@@ -1058,7 +1082,10 @@ def assign_role(role_id):
 @app.route("/rol-intrekken/<int:user_id>/<int:role_id>", methods=["POST"], endpoint="revoke_role")
 def revoke_role(user_id, role_id):
     """Remove a role from a user."""
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         cur.execute(
@@ -1209,7 +1236,9 @@ def manage_permissions():
 def add_permission():
     ''' Add new permission to database. '''
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+    
     cur = conn.cursor()
     cur.execute("SELECT id, name FROM roles")
     all_roles = cur.fetchall()
@@ -1277,7 +1306,9 @@ def add_permission():
 def delete_permission(permission_id):
     ''' Delete permission from database'''
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+    
     cur = conn.cursor()
 
     try:
@@ -1318,7 +1349,9 @@ def assign_permission(permission_id):
         flash("Geen rol geselecteerd.", "warning")
         return redirect(url_for("manage_permissions"))
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+    
     cur = conn.cursor()
     try:
         # Check if role already has this permission
@@ -1351,7 +1384,10 @@ def assign_permission(permission_id):
 @app.route("/recht-intrekken/<int:role_id>/<int:permission_id>", methods=["POST"], endpoint="revoke_permission")
 def revoke_permission(role_id, permission_id):
     """Remove a permission from a role."""
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         cur.execute(
@@ -1448,7 +1484,9 @@ def manage_posts():
 def add_post():
     ''' Add new news post to database '''
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+    
     cur = conn.cursor()
     cur.execute("SELECT id, name FROM tags")
     all_tags = cur.fetchall()
@@ -1510,7 +1548,10 @@ def add_post():
 @app.route("/post-bewerken/<int:post_id>", methods=["GET", "POST"], endpoint="edit_post")
 def edit_post(post_id):
     ''' Edit an existing post '''
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute("SELECT id, title, content, is_published, visibility, is_deleted, is_pinned FROM posts WHERE id = %s", (post_id,))
     post = cur.fetchone()
@@ -1567,7 +1608,10 @@ def edit_post(post_id):
 
 @app.route('/post-verwijderen/<int:post_id>', methods=["GET", "POST"], endpoint="soft_delete_post")
 def soft_delete_post(post_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s AND is_deleted = %s', (post_id, False))
     post = cur.fetchone()
@@ -1591,7 +1635,10 @@ def soft_delete_post(post_id):
 
 @app.route('/post-definitief-verwijderen/<int:post_id>', methods=["GET", "POST"], endpoint="hard_delete_post")
 def hard_delete_post(post_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s', (post_id, True))
@@ -1623,7 +1670,10 @@ def hard_delete_post(post_id):
 
 @app.route('/post-herstellen/<int:post_id>', methods=["GET", "POST"], endpoint="recover_post")
 def recover_post(post_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s', (post_id, True))
     post = cur.fetchone()
@@ -1647,7 +1697,10 @@ def recover_post(post_id):
 
 @app.route('/post-publiceren/<int:post_id>', methods=["GET", "POST"], endpoint="publish_post")
 def publish_post(post_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s', (post_id, False, False))
     post = cur.fetchone()
@@ -1670,7 +1723,10 @@ def publish_post(post_id):
 
 @app.route('/post-publiceren-ongedaan-maken/<int:post_id>', methods=["GET", "POST"], endpoint="unpublish_post")
 def unpublish_post(post_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s', (post_id, False, True))
     post = cur.fetchone()
@@ -1694,7 +1750,10 @@ def unpublish_post(post_id):
 
 @app.route('/post-vastmaken/<int:post_id>', methods=["GET", "POST"], endpoint="pin_post")
 def pin_post(post_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+    
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s and is_pinned = %s', (post_id, False, True, False))
     post = cur.fetchone()
@@ -1716,7 +1775,10 @@ def pin_post(post_id):
 
 @app.route('/post-losmaken/<int:post_id>', methods=["GET", "POST"], endpoint="unpin_post")
 def unpin_post(post_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM posts WHERE id = %s and is_deleted = %s and is_published = %s and is_pinned = %s', (post_id, False, True, True))
     post = cur.fetchone()
@@ -1740,7 +1802,9 @@ def unpin_post(post_id):
 def add_event():
     ''' Add new news event to database '''
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute("SELECT id, name FROM tags") # Fetch all tags
     all_tags = cur.fetchall()
@@ -1810,7 +1874,8 @@ def add_event():
 
 @app.route('/evenementen-beheren', endpoint="manage_events")
 def manage_events():
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
     cur = conn.cursor()
     now = datetime.now(ZoneInfo("Europe/Brussels"))
 
@@ -1885,7 +1950,10 @@ def manage_events():
 @app.route("/evenement-bewerken/<int:event_id>", methods=["GET", "POST"], endpoint="edit_event")
 def edit_event(event_id):
     ''' Edit an existing event '''
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute("SELECT id, title, subtitle, description, event_date, location, is_published, visibility, is_deleted FROM events WHERE id = %s", (event_id,))
     event = cur.fetchone()
@@ -1952,7 +2020,10 @@ def edit_event(event_id):
 
 @app.route('/evenement-publiceren/<int:event_id>', methods=["GET", "POST"], endpoint="publish_event")
 def publish_event(event_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM events WHERE id = %s and is_deleted = %s and is_published = %s', (event_id, False, False))
     event = cur.fetchone()
@@ -1975,7 +2046,10 @@ def publish_event(event_id):
 
 @app.route('/evenement-publiceren-ongedaan-maken/<int:event_id>', methods=["GET", "POST"], endpoint="unpublish_event")
 def unpublish_event(event_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM events WHERE id = %s and is_deleted = %s and is_published = %s', (event_id, False, True))
     event = cur.fetchone()
@@ -1999,7 +2073,10 @@ def unpublish_event(event_id):
 
 @app.route('/evenement-verwijderen/<int:event_id>', methods=["GET", "POST"], endpoint="soft_delete_event")
 def soft_delete_event(event_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM events WHERE id = %s AND is_deleted = %s', (event_id, False))
     event = cur.fetchone()
@@ -2023,7 +2100,10 @@ def soft_delete_event(event_id):
 
 @app.route('/evenement-definitief-verwijderen/<int:event_id>', methods=["GET", "POST"], endpoint="hard_delete_event")
 def hard_delete_event(event_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     try:
         cur.execute('SELECT id FROM events WHERE id = %s and is_deleted = %s', (event_id, True))
@@ -2055,7 +2135,10 @@ def hard_delete_event(event_id):
 
 @app.route('/evenement-herstellen/<int:event_id>', methods=["GET", "POST"], endpoint="recover_event")
 def recover_event(event_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute('SELECT id FROM events WHERE id = %s and is_deleted = %s', (event_id, True))
     event = cur.fetchone()
@@ -2080,7 +2163,9 @@ def recover_event(event_id):
 def add_tag():
     ''' Add new tag to database '''
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute("SELECT id, name FROM tags") # Fetch all tags
     all_tags = cur.fetchall()
@@ -2125,7 +2210,9 @@ def add_tag():
 @app.route("/tag-verwijderen/<int:tag_id>", methods=["POST"], endpoint="delete_tag")
 def delete_tag(tag_id):
 
-    conn = get_db_connection()
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
 
     try:
@@ -2160,7 +2247,10 @@ def delete_tag(tag_id):
 
 @app.route("/tag-bewerken/<int:tag_id>", methods=["GET", "POST"], endpoint="edit_tag")
 def edit_tag(tag_id):
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     cur.execute("SELECT id, name, background_color, text_color FROM tags WHERE id = %s", (tag_id,))
     tag = cur.fetchone()
@@ -2210,7 +2300,10 @@ def edit_tag(tag_id):
 
 @app.route("/tags-beheren", methods=["GET", "POST"], endpoint="manage_tags")
 def manage_tags():
-    conn = get_db_connection()
+
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+
     cur = conn.cursor()
     # Fetch all tags with event and post counts
     cur.execute("""
