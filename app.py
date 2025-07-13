@@ -2323,6 +2323,41 @@ def manage_tags():
 
 
 # ════════════════════════════════════════════════
+# ▶ ADMIN: AUDIT LOGBOOK
+# ════════════════════════════════════════════════
+
+@app.route("/logboek", methods=["GET"], endpoint="audit_log")
+def audit_log():
+    """
+    Show the audit log with user info.
+    """
+    user_id = current_user.id if current_user.is_authenticated else None
+    conn = get_db_connection(user_id)
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT 
+                a.id,
+                a.table_name,
+                a.action,
+                a.record_id,
+                a.change_summary,
+                a.created_at,
+                a.user_id,
+                u.username
+            FROM audit_log a
+            LEFT JOIN users u ON a.user_id = u.id
+            ORDER BY a.created_at DESC
+            LIMIT 200
+        """)
+        audit_logs = cur.fetchall()
+        return render_template("admin/audit_log.html", audit_logs=audit_logs, zoneinfo=zoneinfo)
+    finally:
+        cur.close()
+        conn.close()
+
+
+# ════════════════════════════════════════════════
 # ▶ FUNCTIONS
 # ════════════════════════════════════════════════
 def get_existing_usernames():

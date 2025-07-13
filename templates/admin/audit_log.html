@@ -1,0 +1,37 @@
+{% extends "admin/base.html" %} {% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/audit_log.css') }}"
+/>
+{% endblock %} {% block title %}Logboek{% endblock %} {% block content %}
+
+<div class="table-tile">
+  <h1>Logboek</h1>
+
+  <table>
+    <tr>
+      <th>Log id</th>
+      <th>Gebruiker</th>
+      <th>Actie</th>
+      <th>Tabel</th>
+      <th>Record id</th>
+      <th>Datum/Tijd</th>
+    </tr>
+    {% for log in audit_logs %}
+    <tr>
+      <td>{{ log.id }}</td>
+      <td>{{ log.username }}</td>
+      <td>{{ log.action }}</td>
+      <td>{{ log.table_name }}</td>
+      <td>{{ log.record_id }}</td>
+      <td>
+        {{
+        log.created_at.astimezone(zoneinfo.ZoneInfo('Europe/Brussels')).strftime('%Y-%m-%d
+        %H:%M') }}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% endblock %}
