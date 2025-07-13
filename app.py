@@ -224,13 +224,18 @@ def index():
     '''
     conn = get_db_connection()
     cur = conn.cursor()
+
+    cur.execute("SELECT * FROM settings WHERE name = 'index_post_limit'")
+    settings = cur.fetchone()
+    post_limit = settings["value"] if settings and "value" in settings else 3
+
     try:
         cur.execute("""
         SELECT id, title, content, created_at, published_at
         FROM posts
         WHERE is_pinned = %s and is_published = %s and is_deleted = %s and visibility = %s
         ORDER BY created_at DESC
-        LIMIT 3""", (True, True, False, "public"))
+        LIMIT %s""", (True, True, False, "public", post_limit))
         posts = cur.fetchall()
 
         for post in posts:
@@ -324,7 +329,7 @@ def agenda():
     cur = conn.cursor()
     # Fetch upcoming events
     cur.execute("""
-        SELECT title, subtitle, event_date, location
+        SELECT id, title, subtitle, event_date, location
         FROM events
         WHERE is_published = %s 
             AND is_deleted = %s 
@@ -334,9 +339,21 @@ def agenda():
         LIMIT 10""", (True, False, "public"))
     u_events = cur.fetchall()
 
+    for event in u_events:
+        event_id = event["id"]
+        cur.execute("""
+            SELECT t.name, t.background_color, t.text_color
+            FROM tag_map tm
+            LEFT JOIN tags t ON tm.tag_id = t.id
+            WHERE tm.entity_type = %s AND tm.entity_id = %s
+            ORDER BY t.name ASC
+            """, ("event", event_id))
+        event_tags = [row for row in cur.fetchall()]
+        event["tags"] = event_tags  # Attach tags to the event
+
     # Fetch past events
     cur.execute("""
-        SELECT title, subtitle, event_date, location
+        SELECT id, title, subtitle, event_date, location
         FROM events
         WHERE is_published = %s 
             AND is_deleted = %s 
@@ -346,6 +363,18 @@ def agenda():
         ORDER BY event_date DESC
         LIMIT 10""", (True, False, "public"))
     p_events = cur.fetchall()
+
+    for event in p_events:
+        event_id = event["id"]
+        cur.execute("""
+            SELECT t.name, t.background_color, t.text_color
+            FROM tag_map tm
+            LEFT JOIN tags t ON tm.tag_id = t.id
+            WHERE tm.entity_type = %s AND tm.entity_id = %s
+            ORDER BY t.name ASC
+            """, ("event", event_id))
+        event_tags = [row for row in cur.fetchall()]
+        event["tags"] = event_tags  # Attach tags to the event
 
     cur.close()
     conn.close()

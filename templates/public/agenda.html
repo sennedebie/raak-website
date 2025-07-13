@@ -45,6 +45,19 @@
           <p class="event-location">{{ event.location }}</p>
         </div>
 
+        <div class="tag-container">
+          {% if event.tags %} {% for tag in event.tags %} {% if
+          tag.background_color is defined and tag.text_color is defined %}
+          <span
+            class="tag"
+            style="background-color: {{ tag.background_color }}; color: {{ tag.text_color }};"
+            >{{ tag.name|capitalize }}</span
+          >
+          {% else %}
+          <span class="tag">{{ tag.name|capitalize }}</span>
+          {% endif %} {% endfor %} {% endif %}
+        </div>
+
         <div class="event-description">
           {{ event.subtitle[:150] }}{% if event.subtitle|length > 150 %}...{%
           endif %}
